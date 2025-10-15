@@ -1,5 +1,9 @@
 package com.qaldrin.posclient;
 
+import com.qaldrin.posclient.dto.ProductWithQuantityDTO;
+import com.qaldrin.posclient.model.SaleItem;
+import com.qaldrin.posclient.service.ApiService;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -7,140 +11,245 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
+import java.math.BigDecimal;
 import java.net.URL;
+import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 public class DashboardContentController implements Initializable {
 
-    @FXML private TableView<Object> saleTable;
-    @FXML private TableColumn<Object, Integer> colId;
-    @FXML private TableColumn<Object, String> colName;
-    @FXML private TableColumn<Object, String> colCategory;
-    @FXML private TableColumn<Object, Double> colSalePrice;
-    @FXML private TableColumn<Object, Integer> colQuantity;
-    @FXML private TableColumn<Object, Double> colAmount;
+    @FXML private TableView<SaleItem> saleTable;
+    @FXML private TableColumn<SaleItem, Long> colId;
+    @FXML private TableColumn<SaleItem, String> colName;
+    @FXML private TableColumn<SaleItem, String> colCategory;
+    @FXML private TableColumn<SaleItem, BigDecimal> colSalePrice;
+    @FXML private TableColumn<SaleItem, Integer> colQuantity;
+    @FXML private TableColumn<SaleItem, BigDecimal> colAmount;
 
     @FXML private TextField searchField;
-    @FXML private ListView<String> searchDropdown;
+    @FXML private ListView<ProductWithQuantityDTO> searchDropdown;
     @FXML private Label subtotalLabel;
     @FXML private Label taxLabel;
     @FXML private Label totalLabel;
 
+    private final ApiService apiService = new ApiService();
+    private final ObservableList<SaleItem> saleItems = FXCollections.observableArrayList();
+    private static final double TAX_RATE = 0.10;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         initializeTableColumns();
-        // Initialize table data
-        // loadSaleData();
+        saleTable.setItems(saleItems);
+        setupSearchListener();
+        setupDropdownClickHandler();
+        updateSummaryLabels();
     }
 
     private void initializeTableColumns() {
-        colId.setCellValueFactory(new PropertyValueFactory<>("id"));
-        colName.setCellValueFactory(new PropertyValueFactory<>("name"));
-        colCategory.setCellValueFactory(new PropertyValueFactory<>("category"));
-        colSalePrice.setCellValueFactory(new PropertyValueFactory<>("salePrice"));
-        colQuantity.setCellValueFactory(new PropertyValueFactory<>("quantity"));
-        colAmount.setCellValueFactory(new PropertyValueFactory<>("amount"));
+        colId.setCellValueFactory(cellData -> cellData.getValue().idProperty().asObject());
+        colName.setCellValueFactory(cellData -> cellData.getValue().nameProperty());
+        colCategory.setCellValueFactory(cellData -> cellData.getValue().categoryProperty());
+        colSalePrice.setCellValueFactory(cellData -> cellData.getValue().salePriceProperty());
+        colQuantity.setCellValueFactory(cellData -> cellData.getValue().quantityProperty().asObject());
+        colAmount.setCellValueFactory(cellData -> cellData.getValue().amountProperty());
+
+        colQuantity.setCellFactory(column -> new TableCell<SaleItem, Integer>() {
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                } else {
+                    SaleItem saleItem = getTableView().getItems().get(getIndex());
+                    TextField quantityField = new TextField(item.toString());
+                    quantityField.setPrefWidth(60);
+                    quantityField.textProperty().addListener((obs, oldVal, newVal) -> {
+                        if (!newVal.matches("\\d*")) {
+                            quantityField.setText(oldVal);
+                        }
+                    });
+                    quantityField.setOnAction(e -> {
+                        try {
+                            int newQuantity = Integer.parseInt(quantityField.getText());
+                            if (newQuantity > 0) {
+                                saleItem.setQuantity(newQuantity);
+                                updateSummaryLabels();
+                            } else {
+                                showAlert("Invalid Quantity", "Quantity must be greater than 0");
+                                quantityField.setText(item.toString());
+                            }
+                        } catch (NumberFormatException ex) {
+                            showAlert("Invalid Input", "Please enter a valid number");
+                            quantityField.setText(item.toString());
+                        }
+                    });
+                    setGraphic(quantityField);
+                }
+            }
+        });
     }
 
-    // Method to load sale data into table
-    public void loadSaleData() {
-        // TODO: Implement data loading logic
-        ObservableList<Object> saleData = FXCollections.observableArrayList();
-        saleTable.setItems(saleData);
+    private void setupSearchListener() {
+        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null || newValue.trim().isEmpty()) {
+                showSearchDropdown(false);
+                return;
+            }
+
+            if (newValue.trim().length() >= 1) {
+                performSearch(newValue.trim());
+            }
+        });
+
+        searchField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue && !searchDropdown.isFocused()) {
+                Platform.runLater(() -> showSearchDropdown(false));
+            }
+        });
     }
 
-    // Search functionality
-    @FXML
-    private void handleSearch() {
-        // TODO: Implement search logic
-        String searchText = searchField.getText();
-        // Trigger search and show dropdown
-        // performSearch(searchText);
+    private void setupDropdownClickHandler() {
+        searchDropdown.setCellFactory(param -> new ListCell<ProductWithQuantityDTO>() {
+            @Override
+            protected void updateItem(ProductWithQuantityDTO product, boolean empty) {
+                super.updateItem(product, empty);
+                if (empty || product == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("%s - %s ($%.2f) [Stock: %d]",
+                            product.getName(),
+                            product.getCategory(),
+                            product.getSalePrice(),
+                            product.getAvailableQuantity()));
+                }
+            }
+        });
+
+        searchDropdown.setOnMouseClicked(event -> {
+            ProductWithQuantityDTO selected = searchDropdown.getSelectionModel().getSelectedItem();
+            if (selected != null) {
+                addProductToSale(selected);
+                searchField.clear();
+                showSearchDropdown(false);
+            }
+        });
     }
 
-    // Update summary labels
-    public void updateSummaryLabels(double subtotal, double tax, double total) {
-        // TODO: Implement summary update logic
+    private void performSearch(String query) {
+        new Thread(() -> {
+            try {
+                List<ProductWithQuantityDTO> products = apiService.searchProducts(query, 10);
+                Platform.runLater(() -> {
+                    if (!products.isEmpty()) {
+                        searchDropdown.setItems(FXCollections.observableArrayList(products));
+                        showSearchDropdown(true);
+                    } else {
+                        showSearchDropdown(false);
+                    }
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    showSearchDropdown(false);
+                    System.err.println("Search error: " + e.getMessage());
+                });
+            }
+        }).start();
+    }
+
+    private void addProductToSale(ProductWithQuantityDTO product) {
+        if (product.getAvailableQuantity() == null || product.getAvailableQuantity() <= 0) {
+            showAlert("Out of Stock", "Product " + product.getName() + " is out of stock!");
+            return;
+        }
+
+        Optional<SaleItem> existingItem = saleItems.stream()
+                .filter(item -> item.getId().equals(product.getId()))
+                .findFirst();
+
+        if (existingItem.isPresent()) {
+            SaleItem item = existingItem.get();
+            int newQuantity = item.getQuantity() + 1;
+            if (newQuantity > product.getAvailableQuantity()) {
+                showAlert("Insufficient Stock",
+                        String.format("Only %d items available in stock", product.getAvailableQuantity()));
+                return;
+            }
+            item.setQuantity(newQuantity);
+        } else {
+            SaleItem newItem = new SaleItem(
+                    product.getId(),
+                    product.getName(),
+                    product.getCategory(),
+                    product.getBarcode(),
+                    product.getSalePrice(),
+                    1
+            );
+            saleItems.add(newItem);
+        }
+
+        saleTable.refresh();
+        updateSummaryLabels();
+    }
+
+    private void updateSummaryLabels() {
+        BigDecimal subtotal = saleItems.stream()
+                .map(SaleItem::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal tax = subtotal.multiply(BigDecimal.valueOf(TAX_RATE));
+        BigDecimal total = subtotal.add(tax);
+
         subtotalLabel.setText(String.format("Subtotal: $%.2f", subtotal));
         taxLabel.setText(String.format("TAX: $%.2f", tax));
         totalLabel.setText(String.format("Total: $%.2f", total));
     }
 
-    // Add item to sale
-    public void addSaleItem(Object item) {
-        // TODO: Implement add item logic
-        // saleTable.getItems().add(item);
-        // updateSummaryLabels();
+    public ObservableList<SaleItem> getSaleItems() {
+        return saleItems;
     }
 
-    // Remove selected item from sale
+    public BigDecimal getSubtotal() {
+        return saleItems.stream()
+                .map(SaleItem::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal getTax() {
+        return getSubtotal().multiply(BigDecimal.valueOf(TAX_RATE));
+    }
+
+    public BigDecimal getTotal() {
+        return getSubtotal().add(getTax());
+    }
+
     @FXML
     private void removeSelectedItem() {
-        // TODO: Implement remove item logic
-        Object selectedItem = saleTable.getSelectionModel().getSelectedItem();
+        SaleItem selectedItem = saleTable.getSelectionModel().getSelectedItem();
         if (selectedItem != null) {
-            // saleTable.getItems().remove(selectedItem);
-            // updateSummaryLabels();
+            saleItems.remove(selectedItem);
+            updateSummaryLabels();
+        } else {
+            showAlert("No Selection", "Please select an item to remove");
         }
     }
 
-    // Clear all sale items
-    @FXML
-    private void clearSale() {
-        // TODO: Implement clear sale logic
-        // saleTable.getItems().clear();
-        // updateSummaryLabels();
+    public void clearSale() {
+        saleItems.clear();
+        updateSummaryLabels();
     }
 
-    // Calculate totals
-    public void calculateTotals() {
-        // TODO: Implement total calculation logic
-        // double subtotal = calculateSubtotal();
-        // double tax = calculateTax(subtotal);
-        // double total = subtotal + tax;
-        // updateSummaryLabels(subtotal, tax, total);
-    }
-
-    // Show/hide search dropdown
-    public void showSearchDropdown(boolean show) {
+    private void showSearchDropdown(boolean show) {
         searchDropdown.setVisible(show);
         searchDropdown.setManaged(show);
     }
 
-    // Handle dropdown item selection
-    @FXML
-    private void handleDropdownSelection() {
-        // TODO: Implement dropdown selection logic
-        String selectedItem = searchDropdown.getSelectionModel().getSelectedItem();
-        if (selectedItem != null) {
-            // Add selected product to sale
-            // addSaleItemFromSearch(selectedItem);
-            searchField.setText(selectedItem);
-            showSearchDropdown(false);
-        }
-    }
-
-    // Refresh table data
-    public void refreshTable() {
-        // TODO: Implement table refresh logic
-        // loadSaleData();
-    }
-
-    // Export sale data
-    @FXML
-    private void exportSaleData() {
-        // TODO: Implement export functionality
-    }
-
-    // Print receipt
-    @FXML
-    private void printReceipt() {
-        // TODO: Implement print functionality
-    }
-
-    // Handle table selection
-    @FXML
-    private void handleTableSelection() {
-        // TODO: Handle row selection events
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }
