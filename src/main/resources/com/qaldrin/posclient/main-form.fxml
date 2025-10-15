@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="com.qaldrin.posclient.MainformController">
+    <children>
+        <!-- Main content container centered -->
+        <VBox alignment="CENTER" layoutX="200.0" layoutY="50.0" prefHeight="500.0" prefWidth="400.0" spacing="30.0">
+            <children>
+                <!-- Welcome Label -->
+                <Label alignment="CENTER" prefHeight="50.0" prefWidth="350.0" text="Welcome to POS System">
+                    <font>
+                        <Font name="System Bold" size="24.0" />
+                    </font>
+                </Label>
+
+                <!-- PIN Entry Section -->
+                <VBox alignment="CENTER" spacing="15.0">
+                    <children>
+                        <Label text="Enter Your PIN:" textAlignment="CENTER">
+                            <font>
+                                <Font size="16.0" />
+                            </font>
+                        </Label>
+                        <!-- PIN Text Field -->
+                        <TextField fx:id="pinTextField" alignment="CENTER" editable="false" prefHeight="40.0" prefWidth="200.0" promptText="Enter PIN" style="-fx-font-size: 18px; -fx-background-radius: 5px; -fx-border-radius: 5px;">
+                            <font>
+                                <Font size="18.0" />
+                            </font>
+                        </TextField>
+                    </children>
+                </VBox>
+
+                <!-- Virtual Number Pad -->
+                <GridPane alignment="CENTER" hgap="10.0" vgap="10.0" prefWidth="240.0">
+                    <children>
+                        <!-- Row 1 -->
+                        <Button fx:id="btn1" mnemonicParsing="false" onAction="#onNumberClicked" prefHeight="50.0" prefWidth="60.0" text="1" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                            <font>
+                                <Font size="18.0" />
+                            </font>
+                        </Button>
+                        <Button fx:id="btn2" mnemonicParsing="false" onAction="#onNumberClicked" prefHeight="50.0" prefWidth="60.0" text="2" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                            <font>
+                                <Font size="18.0" />
+                            </font>
+                        </Button>
+                        <Button fx:id="btn3" mnemonicParsing="false" onAction="#onNumberClicked" prefHeight="50.0" prefWidth="60.0" text="3" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                            <font>
+                                <Font size="18.0" />
+                            </font>
+                        </Button>
+                        <!-- Row 2 -->
+                        <Button fx:id="btn4" mnemonicParsing="false" onAction="#onNumberClicked" prefHeight="50.0" prefWidth="60.0" text="4" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                            <font>
+                                <Font size="18.0" />
+                            </font>
+                        </Button>
+                        <Button fx:id="btn5" mnemonicParsing="false" onAction="#onNumberClicked" prefHeight="50.0" prefWidth="60.0" text="5" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                            <font>
+                                <Font size="18.0" />
+                            </font>
+                        </Button>
+                        <Button fx:id="btn6" mnemonicParsing="false" onAction="#onNumberClicked" prefHeight="50.0" prefWidth="60.0" text="6" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                            <font>
+                                <Font size="18.0" />
+                            </font>
+                        </Button>
+                        <!-- Row 3 -->
+                        <Button fx:id="btn7" mnemonicParsing="false" onAction="#onNumberClicked" prefHeight="50.0" prefWidth="60.0" text="7" GridPane.columnIndex="0" GridPane.rowIndex="2">
+                            <font>
+                                <Font size="18.0" />
+                            </font>
+                        </Button>
+                        <Button fx:id="btn8" mnemonicParsing="false" onAction="#onNumberClicked" prefHeight="50.0" prefWidth="60.0" text="8" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                            <font>
+                                <Font size="18.0" />
+                            </font>
+                        </Button>
+                        <Button fx:id="btn9" mnemonicParsing="false" onAction="#onNumberClicked" prefHeight="50.0" prefWidth="60.0" text="9" GridPane.columnIndex="2" GridPane.rowIndex="2">
+                            <font>
+                                <Font size="18.0" />
+                            </font>
+                        </Button>
+                        <!-- Row 4 -->
+                        <Button fx:id="btnClear" mnemonicParsing="false" onAction="#onClearClicked" prefHeight="50.0" prefWidth="60.0" style="-fx-background-color: #ff6b6b; -fx-text-fill: white;" text="C" GridPane.columnIndex="0" GridPane.rowIndex="3">
+                            <font>
+                                <Font size="18.0" />
+                            </font>
+                        </Button>
+                        <Button fx:id="btn0" mnemonicParsing="false" onAction="#onNumberClicked" prefHeight="50.0" prefWidth="60.0" text="0" GridPane.columnIndex="1" GridPane.rowIndex="3">
+                            <font>
+                                <Font size="18.0" />
+                            </font>
+                        </Button>
+                        <Button fx:id="btnDelete" mnemonicParsing="false" onAction="#onDeleteClicked" prefHeight="50.0" prefWidth="60.0" style="-fx-background-color: #ffa500; -fx-text-fill: white;" text="⌫" GridPane.columnIndex="2" GridPane.rowIndex="3">
+                            <font>
+                                <Font size="18.0" />
+                            </font>
+                        </Button>
+                    </children>
+                </GridPane>
+
+                <!-- Action Buttons -->
+                <VBox alignment="CENTER" spacing="10.0">
+                    <children>
+                        <Button fx:id="loginBtn" mnemonicParsing="false" onAction="#onLoginClicked" prefHeight="45.0" prefWidth="150.0" style="-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-background-radius: 5px;" text="Login">
+                            <font>
+                                <Font size="16.0" />
+                            </font>
+                        </Button>
+                        <Button fx:id="getStartedbtn" mnemonicParsing="false" onAction="#onGetStarted" prefHeight="40.0" prefWidth="150.0" style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-background-radius: 5px;" text="Get Started">
+                            <font>
+                                <Font size="14.0" />
+                            </font>
+                        </Button>
+                    </children>
+                </VBox>
+            </children>
+        </VBox>
+    </children>
+</AnchorPane>
