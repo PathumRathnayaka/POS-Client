@@ -1,6 +1,8 @@
 package com.qaldrin.posclient;
 
-import com.jfoenix.controls.JFXButton;
+
+
+
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -18,15 +20,10 @@ public class PaymentFormController implements Initializable {
     @FXML private VBox itemsVBox;
     @FXML private AnchorPane invoiceMessage;
 
-    // Action Buttons
-    @FXML private JFXButton cancelButton;
-    @FXML private JFXButton discountButton;
-    @FXML private JFXButton taxesButton;
+
 
     // Payment Method Buttons
-    @FXML private JFXButton cashButton;
-    @FXML private JFXButton checkButton;
-    @FXML private JFXButton cardButton;
+
 
     // Price Labels
     @FXML private Label subTotalLabel;
@@ -47,8 +44,7 @@ public class PaymentFormController implements Initializable {
     @FXML private Button emailInvoiceButton;
     @FXML private Button pdfInvoiceButton;
 
-    // Done Button
-    @FXML private JFXButton doneButton;
+
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -131,27 +127,7 @@ public class PaymentFormController implements Initializable {
     }
 
     public void selectPaymentMethod(String method) {
-        // TODO: Handle payment method selection
-        // Reset all payment buttons
-        cashButton.setStyle("-fx-background-color: #ecf0f1; -fx-text-fill: #2c3e50;");
-        checkButton.setStyle("-fx-background-color: #ecf0f1; -fx-text-fill: #2c3e50;");
-        cardButton.setStyle("-fx-background-color: #ecf0f1; -fx-text-fill: #2c3e50;");
 
-        // Highlight selected method
-        switch (method) {
-            case "Cash":
-                cashButton.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white;");
-                paidTextField.setDisable(false);
-                break;
-            case "Check":
-                checkButton.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white;");
-                break;
-            case "Card":
-                cardButton.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white;");
-                break;
-        }
-
-        doneButton.setDisable(false);
     }
 
     public void updateCustomerInfo(String saleId, String customerContact) {
@@ -205,7 +181,7 @@ public class PaymentFormController implements Initializable {
         updatePriceLabels(0.0, 0.0, 0.0);
         paidTextField.clear();
         paidTextField.setDisable(true);
-        doneButton.setDisable(true);
+
         loadSaleItems();
     }
 

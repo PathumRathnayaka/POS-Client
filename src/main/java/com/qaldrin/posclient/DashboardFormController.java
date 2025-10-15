@@ -1,13 +1,17 @@
 package com.qaldrin.posclient;
 
-
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.AnchorPane;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.ResourceBundle;
 
-public class DashboardFormController {
+public class DashboardFormController implements Initializable {
 
     @FXML private AnchorPane primaryScene;
     @FXML private AnchorPane navigationPane;
@@ -22,52 +26,92 @@ public class DashboardFormController {
     @FXML private Button quantityButton;
     @FXML private Button syncDatabaseButton;
 
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        // Automatically load Dashboard content when the form loads
+        loadDashboardContent();
+    }
+
+    /**
+     * Load Dashboard-content.fxml into primaryScene
+     */
+    private void loadDashboardContent() {
+        loadContent("/com/qaldrin/posclient/Dashboard-content.fxml");
+    }
+
+    /**
+     * Generic method to load FXML content into primaryScene
+     */
+    private void loadContent(String fxmlPath) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            AnchorPane content = loader.load();
+
+            // Clear existing content
+            primaryScene.getChildren().clear();
+
+            // Add new content and anchor it to fill the parent
+            primaryScene.getChildren().add(content);
+            AnchorPane.setTopAnchor(content, 0.0);
+            AnchorPane.setBottomAnchor(content, 0.0);
+            AnchorPane.setLeftAnchor(content, 0.0);
+            AnchorPane.setRightAnchor(content, 0.0);
+
+            System.out.println("Successfully loaded: " + fxmlPath);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Error loading content from: " + fxmlPath);
+        }
+    }
 
     @FXML
     private void onDashboardButtonClick() {
-        // Load dashboard content into primaryScene
         System.out.println("Dashboard clicked");
+        loadDashboardContent();
     }
 
     @FXML
     private void onProductClick() {
-        // Load product content into primaryScene
         System.out.println("Product clicked");
+        // TODO: Load product content when available
+        // loadContent("/com/qaldrin/posclient/Product-content.fxml");
     }
 
     @FXML
     private void onSettingButtonClick() {
-        // Load settings content into primaryScene
         System.out.println("Settings clicked");
+        // TODO: Load settings content when available
+        // loadContent("/com/qaldrin/posclient/Settings-content.fxml");
     }
 
     @FXML
     private void onDeleteButtonClick() {
-        // Handle delete action
         System.out.println("Delete clicked");
+        // Handle delete action for selected item in current view
     }
 
     @FXML
     private void onQuantityButtonClick() {
-        // Handle quantity action
         System.out.println("Quantity clicked");
+        // Handle quantity modification for selected item
     }
 
     @FXML
     private void onNewCustomerButtonClick() {
-        // Handle new customer action
         System.out.println("New Customer clicked");
+        // Handle new customer creation
     }
 
     @FXML
     private void onSyncDatabaseClick() {
-        // Handle database sync
         System.out.println("Sync Database clicked");
+        // Handle database synchronization
     }
 
     @FXML
     private void onPaymentButtonClick() {
-        // Handle payment
         System.out.println("Payment clicked");
+        loadContent("/com/qaldrin/posclient/Payment-form.fxml");
     }
 }
