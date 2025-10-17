@@ -1,4 +1,4 @@
-package com.qaldrin.posclient;
+package com.qaldrin.posclient.controller;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;

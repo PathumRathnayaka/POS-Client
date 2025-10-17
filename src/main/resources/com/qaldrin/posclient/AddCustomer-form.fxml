@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import com.jfoenix.controls.JFXButton?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane prefHeight="447.0" prefWidth="671.0" style="-fx-background-color: #f5f5f5;" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="com.qaldrin.posclient.controller.AddCustomerFormController">
+    <children>
+        <Label layoutX="196.0" layoutY="40.0" prefHeight="32.0" prefWidth="279.0" text="New Sale - Customer Information">
+            <font>
+                <Font name="System Bold" size="22.0" />
+            </font>
+        </Label>
+        <Pane layoutX="17.0" layoutY="111.0" prefHeight="311.0" prefWidth="634.0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 2);">
+            <children>
+                <!-- Sale ID Section with Regenerate Button -->
+                <HBox layoutX="28.0" layoutY="40.0" spacing="10.0" alignment="CENTER_LEFT">
+                    <children>
+                        <TextField fx:id="saleIdField" prefHeight="35.0" prefWidth="200.0" promptText="Auto-generated Sale ID" style="-fx-background-color: #f8f9fa; -fx-border-color: #bdc3c7; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 8;" />
+                        <Button fx:id="regenerateButton" onAction="#onRegenerateSaleId" prefHeight="35.0" prefWidth="80.0" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand;" text="Regenerate" />
+                    </children>
+                </HBox>
+                <Label layoutX="28.0" layoutY="23.0" prefHeight="17.0" prefWidth="72.0" text="Sale ID" style="-fx-font-weight: bold; -fx-text-fill: #34495e;" />
+                <Label layoutX="317.0" layoutY="23.0" text="Customer Contact" style="-fx-font-weight: bold; -fx-text-fill: #34495e;" />
+                <TextField fx:id="customerContactField" layoutX="317.0" layoutY="40.0" prefHeight="35.0" prefWidth="248.0" promptText="Enter phone number" style="-fx-background-radius: 5; -fx-border-radius: 5; -fx-border-color: #bdc3c7; -fx-padding: 8;" />
+                <Label layoutX="28.0" layoutY="97.0" text="Customer Email (Optional)" style="-fx-font-weight: bold; -fx-text-fill: #34495e;" />
+                <TextField fx:id="customerEmailField" layoutX="27.0" layoutY="118.0" prefHeight="35.0" prefWidth="342.0" promptText="Enter email address (optional)" style="-fx-background-radius: 5; -fx-border-radius: 5; -fx-border-color: #bdc3c7; -fx-padding: 8;" />
+                <JFXButton fx:id="saveButton" layoutX="45.0" layoutY="182.0" onAction="#onSaveCustomer" prefHeight="43.0" prefWidth="248.0" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5;" text="Save Customer Sale ID" />
+                <JFXButton fx:id="cancelButton" layoutX="346.0" layoutY="182.0" onAction="#onCancelCustomer" prefHeight="43.0" prefWidth="248.0" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5;" text="Cancel" />
+                <!-- Info Label -->
+                <Label layoutX="28.0" layoutY="250.0" prefHeight="17.0" prefWidth="550.0" text="Sale ID is automatically generated and can be regenerated if needed" style="-fx-font-size: 12px; -fx-text-fill: #7f8c8d; -fx-font-style: italic;" />
+            </children>
+        </Pane>
+    </children>
+</AnchorPane>

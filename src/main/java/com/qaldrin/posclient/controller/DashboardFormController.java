@@ -1,11 +1,15 @@
-package com.qaldrin.posclient;
+package com.qaldrin.posclient.controller;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.AnchorPane;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import java.io.IOException;
 import java.net.URL;
@@ -100,7 +104,7 @@ public class DashboardFormController implements Initializable {
     @FXML
     private void onNewCustomerButtonClick() {
         System.out.println("New Customer clicked");
-        // Handle new customer creation
+        showAddCustomerPopup();
     }
 
     @FXML
@@ -113,5 +117,40 @@ public class DashboardFormController implements Initializable {
     private void onPaymentButtonClick() {
         System.out.println("Payment clicked");
         loadContent("/com/qaldrin/posclient/Payment-form.fxml");
+    }
+
+    private void showAddCustomerPopup() {
+        try {
+            // Load the AddCustomerForm FXML
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/qaldrin/posclient/AddCustomerForm.fxml"));
+            AnchorPane root = loader.load();
+
+            // Get the controller instance
+            AddCustomerFormController controller = loader.getController();
+
+            // Create a new stage for the popup
+            Stage popupStage = new Stage();
+            popupStage.setTitle("New Customer - Sale Information");
+            popupStage.setScene(new Scene(root, 671, 447));
+
+            // Set modality to block interaction with parent window
+            popupStage.initModality(Modality.APPLICATION_MODAL);
+            popupStage.initStyle(StageStyle.UNDECORATED); // Optional: Remove default window decorations
+
+            // Center the popup on screen
+            popupStage.centerOnScreen();
+
+            // Optional: Add custom window styling
+            popupStage.getScene().getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
+
+            // Show the popup
+            popupStage.showAndWait(); // Wait until popup is closed
+
+            System.out.println("Add Customer popup closed");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Error loading AddCustomerForm.fxml");
+        }
     }
 }

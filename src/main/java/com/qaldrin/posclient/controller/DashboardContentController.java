@@ -1,4 +1,4 @@
-package com.qaldrin.posclient;
+package com.qaldrin.posclient.controller;
 
 import com.qaldrin.posclient.dto.ProductWithQuantityDTO;
 import com.qaldrin.posclient.model.SaleItem;
@@ -9,7 +9,6 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 
 import java.math.BigDecimal;
 import java.net.URL;

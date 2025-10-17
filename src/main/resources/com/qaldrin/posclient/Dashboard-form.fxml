@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import com.jfoenix.controls.JFXButton?>
 
-<AnchorPane fx:id="DashBoard" prefHeight="766.0" prefWidth="1366.0" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.qaldrin.posclient.DashboardFormController">
+<AnchorPane fx:id="DashBoard" prefHeight="766.0" prefWidth="1366.0" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.qaldrin.posclient.controller.DashboardFormController">
     <children>
         <!-- Primary content area - Dashboard content will be loaded here -->
         <AnchorPane fx:id="primaryScene" layoutX="5.0" layoutY="46.0" prefHeight="717.0" prefWidth="1050.0" style="-fx-background-color: #f0f0f0; -fx-border-color: #cccccc; -fx-border-width: 1px;" />

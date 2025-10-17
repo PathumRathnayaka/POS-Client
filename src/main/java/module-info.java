@@ -7,4 +7,6 @@ module com.qaldrin.posclient {
 
     opens com.qaldrin.posclient to javafx.fxml;
     exports com.qaldrin.posclient;
+    exports com.qaldrin.posclient.controller;
+    opens com.qaldrin.posclient.controller to javafx.fxml;
 }
