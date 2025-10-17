@@ -1,5 +1,6 @@
 package com.qaldrin.posclient.controller;
 
+import com.qaldrin.posclient.dto.CustomerDTO;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -121,8 +122,8 @@ public class DashboardFormController implements Initializable {
 
     private void showAddCustomerPopup() {
         try {
-            // Load the AddCustomerForm FXML
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/qaldrin/posclient/AddCustomerForm.fxml"));
+            // FIXED: Correct file name with hyphen
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/qaldrin/posclient/AddCustomer-form.fxml"));
             AnchorPane root = loader.load();
 
             // Get the controller instance
@@ -140,17 +141,38 @@ public class DashboardFormController implements Initializable {
             // Center the popup on screen
             popupStage.centerOnScreen();
 
-            // Optional: Add custom window styling
-            popupStage.getScene().getStylesheets().add(getClass().getResource("/styles/main.css").toExternalForm());
+            // Optional: Add custom window styling (check if CSS exists first)
+            try {
+                URL cssUrl = getClass().getResource("/styles/main.css");
+                if (cssUrl != null) {
+                    popupStage.getScene().getStylesheets().add(cssUrl.toExternalForm());
+                }
+            } catch (Exception e) {
+                System.out.println("CSS file not found, skipping styling");
+            }
 
             // Show the popup
             popupStage.showAndWait(); // Wait until popup is closed
 
-            System.out.println("Add Customer popup closed");
+            // Check if customer was saved
+            CustomerDTO savedCustomer = controller.getSavedCustomer();
+            if (savedCustomer != null) {
+                System.out.println("Customer saved with Sale ID: " + savedCustomer.getSaleId());
+                // You can pass this information back to the dashboard if needed
+            } else {
+                System.out.println("Add Customer popup closed without saving");
+            }
 
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Error loading AddCustomerForm.fxml");
+            System.err.println("Error loading AddCustomer-form.fxml: " + e.getMessage());
+
+            // Show error alert to user
+            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("Failed to open Add Customer form");
+            alert.setContentText("Error: " + e.getMessage());
+            alert.showAndWait();
         }
     }
 }
