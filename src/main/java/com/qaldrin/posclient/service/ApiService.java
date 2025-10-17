@@ -2,6 +2,7 @@ package com.qaldrin.posclient.service;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.qaldrin.posclient.dto.CustomerDTO;
 import com.qaldrin.posclient.dto.PaymentRequestDTO;
 import com.qaldrin.posclient.dto.ProductWithQuantityDTO;
 import com.qaldrin.posclient.util.ApiConfig;
@@ -91,6 +92,74 @@ public class ApiService {
 
             String responseBody = response.body().string();
             Type listType = new TypeToken<List<ProductWithQuantityDTO>>(){}.getType();
+            return gson.fromJson(responseBody, listType);
+        }
+    }
+
+    /**
+     * Save customer to server
+     */
+    public CustomerDTO saveCustomer(CustomerDTO customer) throws IOException {
+        String json = gson.toJson(customer);
+        RequestBody body = RequestBody.create(json, JSON);
+
+        Request request = new Request.Builder()
+                .url(ApiConfig.getCustomersUrl())
+                .post(body)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                String errorBody = response.body() != null ? response.body().string() : "Unknown error";
+                System.err.println("Failed to save customer: " + errorBody);
+                throw new IOException("Failed to save customer: " + response.code() + " - " + errorBody);
+            }
+
+            String responseBody = response.body().string();
+            System.out.println("Customer saved successfully: " + responseBody);
+            return gson.fromJson(responseBody, CustomerDTO.class);
+        }
+    }
+
+    /**
+     * Get customer by sale ID
+     */
+    public CustomerDTO getCustomerBySaleId(String saleId) throws IOException {
+        String url = ApiConfig.getCustomerBySaleIdUrl(saleId);
+        Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                if (response.code() == 404) {
+                    return null; // Customer not found
+                }
+                throw new IOException("Failed to fetch customer: " + response);
+            }
+
+            String responseBody = response.body().string();
+            return gson.fromJson(responseBody, CustomerDTO.class);
+        }
+    }
+
+    /**
+     * Get all customers
+     */
+    public List<CustomerDTO> getAllCustomers() throws IOException {
+        Request request = new Request.Builder()
+                .url(ApiConfig.getCustomersUrl())
+                .get()
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("Failed to fetch customers: " + response);
+            }
+
+            String responseBody = response.body().string();
+            Type listType = new TypeToken<List<CustomerDTO>>(){}.getType();
             return gson.fromJson(responseBody, listType);
         }
     }

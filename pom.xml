@@ -27,7 +27,7 @@
             <version>20.0.1</version>
         </dependency>
 
-        <!-- JFoenix for Material Design -->
+        <!-- JFoenix for Material Design - Updated to compatible version -->
         <dependency>
             <groupId>com.jfoenix</groupId>
             <artifactId>jfoenix</artifactId>

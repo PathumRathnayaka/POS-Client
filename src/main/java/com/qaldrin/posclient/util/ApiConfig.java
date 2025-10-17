@@ -2,16 +2,20 @@ package com.qaldrin.posclient.util;
 
 /**
  * API Configuration for connecting to backend server
+ * Change BASE_URL to match your server's IP address in the local network
  */
 public class ApiConfig {
 
-    // Change this to your server PC's IP address
+    // Change this to your server PC's IP address on the local network
+    // For RJ45 cable connection, both PCs should be on the same subnet
+    // Example: "http://192.168.1.100:8080" or "http://192.168.0.50:8080"
     private static String BASE_URL = "http://192.168.1.100:8080";
 
     // API Endpoints
     public static final String PRODUCTS_ENDPOINT = "/api/products";
     public static final String PRODUCTS_SEARCH_ENDPOINT = "/api/products/search";
     public static final String CUSTOMERS_ENDPOINT = "/api/customers";
+    public static final String CUSTOMER_BY_SALE_ID_ENDPOINT = "/api/customers/sale-id";
     public static final String PAYMENTS_ENDPOINT = "/api/payments/process";
     public static final String STOCK_UPDATE_ENDPOINT = "/api/stock/update";
 
@@ -55,6 +59,13 @@ public class ApiConfig {
      */
     public static String getCustomersUrl() {
         return getFullUrl(CUSTOMERS_ENDPOINT);
+    }
+
+    /**
+     * Get customer by sale ID URL
+     */
+    public static String getCustomerBySaleIdUrl(String saleId) {
+        return getFullUrl(CUSTOMER_BY_SALE_ID_ENDPOINT) + "/" + saleId;
     }
 
     /**
