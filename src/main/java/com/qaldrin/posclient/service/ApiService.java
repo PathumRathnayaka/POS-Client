@@ -169,6 +169,8 @@ public class ApiService {
      */
     public boolean processPayment(PaymentRequestDTO paymentRequest) throws IOException {
         String json = gson.toJson(paymentRequest);
+        System.out.println("Sending payment request: " + json);
+
         RequestBody body = RequestBody.create(json, JSON);
 
         Request request = new Request.Builder()
@@ -180,12 +182,16 @@ public class ApiService {
             if (!response.isSuccessful()) {
                 String errorBody = response.body() != null ? response.body().string() : "Unknown error";
                 System.err.println("Payment failed: " + errorBody);
-                throw new IOException("Failed to process payment: " + response.code());
+                throw new IOException("Failed to process payment: " + response.code() + " - " + errorBody);
             }
 
             String responseBody = response.body().string();
             System.out.println("Payment response: " + responseBody);
-            return true;
+
+            com.qaldrin.posclient.dto.PaymentResponseDTO paymentResponse =
+                gson.fromJson(responseBody, com.qaldrin.posclient.dto.PaymentResponseDTO.class);
+
+            return paymentResponse != null && paymentResponse.isSuccess();
         }
     }
 

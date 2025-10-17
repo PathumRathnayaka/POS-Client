@@ -1,17 +1,26 @@
 package com.qaldrin.posclient.controller;
 
-
-
-
+import com.qaldrin.posclient.dto.CustomerDTO;
+import com.qaldrin.posclient.dto.PaymentRequestDTO;
+import com.qaldrin.posclient.dto.PaymentResponseDTO;
+import com.qaldrin.posclient.dto.SaleItemDTO;
+import com.qaldrin.posclient.model.SaleItem;
+import com.qaldrin.posclient.service.ApiService;
+import com.qaldrin.posclient.service.SaleDataService;
+import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.geometry.Insets;
+import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+import java.math.BigDecimal;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 public class PaymentFormController implements Initializable {
@@ -20,12 +29,13 @@ public class PaymentFormController implements Initializable {
     @FXML private VBox itemsVBox;
     @FXML private AnchorPane invoiceMessage;
 
+    @FXML private Button cashButton;
+    @FXML private Button cardButton;
+    @FXML private Button checkButton;
 
-
-    // Payment Method Buttons
-
-
-    // Price Labels
+    private final ApiService apiService = new ApiService();
+    private String selectedPaymentMethod = null;
+    private boolean paymentProcessed = false;
     @FXML private Label subTotalLabel;
     @FXML private Label taxLabel;
     @FXML private Label totalLabel;
@@ -49,49 +59,110 @@ public class PaymentFormController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         initializeUI();
-        // Load initial data
-        // loadSaleData();
+        loadSaleData();
+        setupPaidTextFieldListener();
     }
 
     private void initializeUI() {
-        // TODO: Initialize UI components, styles, event handlers
-        setupPaymentButtons();
-        setupInvoiceButtons();
-        updatePriceLabels(0.0, 0.0, 0.0);
+        invoiceMessage.setVisible(false);
+        invoiceMessage.setManaged(false);
+        paidTextField.setDisable(true);
     }
 
-    // Action Button Handlers
+    private void loadSaleData() {
+        SaleDataService dataService = SaleDataService.getInstance();
+        CustomerDTO customer = dataService.getCurrentCustomer();
+        ObservableList<SaleItem> saleItems = dataService.getCurrentSaleItems();
+
+        if (customer == null || saleItems == null || saleItems.isEmpty()) {
+            showAlert(Alert.AlertType.ERROR, "Error", "No sale data available!");
+            return;
+        }
+
+        saleIdLabel.setText(customer.getSaleId());
+        customerContactLabel.setText(customer.getContact());
+
+        displaySaleItems(saleItems);
+
+        BigDecimal subtotal = dataService.getSubtotal();
+        BigDecimal tax = dataService.getTax();
+        BigDecimal total = dataService.getTotal();
+
+        subTotalLabel.setText(String.format("$%.2f", subtotal));
+        taxLabel.setText(String.format("$%.2f", tax));
+        totalLabel.setText(String.format("$%.2f", total));
+        paymentTotalLabel.setText(String.format("$%.2f", total));
+        changeLabel.setText("$0.00");
+    }
+
+    private void displaySaleItems(ObservableList<SaleItem> saleItems) {
+        itemsVBox.getChildren().clear();
+
+        for (SaleItem item : saleItems) {
+            HBox itemRow = new HBox(10);
+            itemRow.setPadding(new Insets(5));
+            itemRow.setStyle("-fx-background-color: #f5f5f5; -fx-background-radius: 5;");
+
+            Label nameLabel = new Label(item.getName());
+            nameLabel.setPrefWidth(200);
+            nameLabel.setStyle("-fx-font-weight: bold;");
+
+            Label qtyLabel = new Label("Qty: " + item.getQuantity());
+            qtyLabel.setPrefWidth(80);
+
+            Label priceLabel = new Label(String.format("$%.2f", item.getSalePrice()));
+            priceLabel.setPrefWidth(80);
+
+            Label amountLabel = new Label(String.format("$%.2f", item.getAmount()));
+            amountLabel.setPrefWidth(80);
+            amountLabel.setStyle("-fx-font-weight: bold;");
+
+            itemRow.getChildren().addAll(nameLabel, qtyLabel, priceLabel, amountLabel);
+            itemsVBox.getChildren().add(itemRow);
+        }
+    }
+
+    private void setupPaidTextFieldListener() {
+        paidTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*\\.?\\d*")) {
+                paidTextField.setText(oldValue);
+            } else {
+                calculateChange();
+            }
+        });
+    }
+
     @FXML
     private void onCancel() {
-        // TODO: Implement cancel payment logic
+        boolean confirm = showConfirmation("Cancel Payment",
+                "Are you sure you want to cancel this payment?");
+        if (confirm) {
+            System.out.println("Payment cancelled by user");
+        }
     }
 
     @FXML
     private void onDiscount() {
-        // TODO: Implement discount application logic
+        showAlert(Alert.AlertType.INFORMATION, "Discount", "Discount feature coming soon!");
     }
 
     @FXML
     private void onTaxes() {
-        // TODO: Implement tax management logic
+        showAlert(Alert.AlertType.INFORMATION, "Taxes", "Tax is already calculated (10%)");
     }
 
-    // Payment Method Handlers
     @FXML
     private void onCashPayment() {
-        // TODO: Implement cash payment processing
         selectPaymentMethod("Cash");
     }
 
     @FXML
     private void onCheckPayment() {
-        // TODO: Implement check payment processing
         selectPaymentMethod("Check");
     }
 
     @FXML
     private void onCardPayment() {
-        // TODO: Implement card payment processing
         selectPaymentMethod("Card");
     }
 
@@ -113,79 +184,198 @@ public class PaymentFormController implements Initializable {
 
     @FXML
     private void onDone() {
-        // TODO: Complete payment transaction
-    }
+        if (paymentProcessed) {
+            showAlert(Alert.AlertType.WARNING, "Already Processed",
+                    "This payment has already been processed!");
+            return;
+        }
 
-    // Utility Methods
-    public void updatePriceLabels(double subtotal, double tax, double total) {
-        // TODO: Update price display
-        subTotalLabel.setText(String.format("Sub Total: $%.2f", subtotal));
-        taxLabel.setText(String.format("Tax: $%.2f", tax));
-        totalLabel.setText(String.format("Total: $%.2f", total));
-        paymentTotalLabel.setText(String.format("Total: $%.2f", total));
-        changeLabel.setText("Change: $0.00");
-    }
+        if (selectedPaymentMethod == null) {
+            showAlert(Alert.AlertType.WARNING, "Payment Method Required",
+                    "Please select a payment method (Cash or Card)");
+            return;
+        }
 
-    public void selectPaymentMethod(String method) {
+        String paidText = paidTextField.getText().trim();
+        if (paidText.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Amount Required",
+                    "Please enter the paid amount");
+            return;
+        }
 
-    }
-
-    public void updateCustomerInfo(String saleId, String customerContact) {
-        // TODO: Update customer information display
-        saleIdLabel.setText("Sale ID: " + saleId);
-        customerContactLabel.setText("Customer Contact: " + customerContact);
-    }
-
-    public void calculateChange() {
-        // TODO: Calculate and display change
         try {
-            String paidText = paidTextField.getText().replace("$", "").trim();
-            double paid = Double.parseDouble(paidText);
-            double total = Double.parseDouble(totalLabel.getText().replaceAll("[^\\d.]", ""));
-            double change = paid - total;
-            changeLabel.setText(String.format("Change: $%.2f", Math.max(0, change)));
+            BigDecimal paidAmount = new BigDecimal(paidText);
+            BigDecimal totalAmount = SaleDataService.getInstance().getTotal();
+
+            if (paidAmount.compareTo(totalAmount) < 0) {
+                showAlert(Alert.AlertType.WARNING, "Insufficient Amount",
+                        String.format("Paid amount ($%.2f) is less than total ($%.2f)",
+                                paidAmount, totalAmount));
+                return;
+            }
+
+            processPayment(paidAmount);
+
         } catch (NumberFormatException e) {
-            changeLabel.setText("Change: $0.00");
+            showAlert(Alert.AlertType.ERROR, "Invalid Amount",
+                    "Please enter a valid number");
         }
     }
 
-    public void loadSaleItems() {
-        // TODO: Load and display sale items in itemsVBox
-        itemsVBox.getChildren().clear();
+    private void processPayment(BigDecimal paidAmount) {
+        SaleDataService dataService = SaleDataService.getInstance();
+        CustomerDTO customer = dataService.getCurrentCustomer();
+        ObservableList<SaleItem> saleItems = dataService.getCurrentSaleItems();
+
+        List<SaleItemDTO> saleItemDTOs = new ArrayList<>();
+        for (SaleItem item : saleItems) {
+            SaleItemDTO dto = new SaleItemDTO();
+            dto.setProductId(item.getId());
+            dto.setProductName(item.getName());
+            dto.setBarcode(item.getBarcode());
+            dto.setQuantity(item.getQuantity());
+            dto.setUnitPrice(item.getSalePrice());
+            dto.setTotalPrice(item.getAmount());
+            saleItemDTOs.add(dto);
+        }
+
+        PaymentRequestDTO paymentRequest = new PaymentRequestDTO();
+        paymentRequest.setSaleId(customer.getSaleId());
+        paymentRequest.setCustomerContact(customer.getContact());
+        paymentRequest.setCustomerEmail(customer.getEmail());
+        paymentRequest.setSaleItems(saleItemDTOs);
+        paymentRequest.setSubTotal(dataService.getSubtotal());
+        paymentRequest.setTaxAmount(dataService.getTax());
+        paymentRequest.setDiscountAmount(BigDecimal.ZERO);
+        paymentRequest.setTotalAmount(dataService.getTotal());
+        paymentRequest.setPaidAmount(paidAmount);
+        paymentRequest.setChangeAmount(paidAmount.subtract(dataService.getTotal()));
+        paymentRequest.setPaymentMethod(selectedPaymentMethod);
+
+        new Thread(() -> {
+            try {
+                boolean success = apiService.processPayment(paymentRequest);
+
+                Platform.runLater(() -> {
+                    if (success) {
+                        paymentProcessed = true;
+                        updateStockAfterPayment(saleItems);
+                        showPaymentSuccess();
+                    } else {
+                        showAlert(Alert.AlertType.ERROR, "Payment Failed",
+                                "Failed to process payment. Please try again.");
+                    }
+                });
+
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    System.err.println("Payment error: " + e.getMessage());
+                    e.printStackTrace();
+                    showAlert(Alert.AlertType.ERROR, "Payment Error",
+                            "Error processing payment: " + e.getMessage() +
+                                    "\n\nPlease check server connection.");
+                });
+            }
+        }).start();
     }
 
-    public void setupPaymentButtons() {
-        // TODO: Setup payment button event handlers and styling
+    private void updateStockAfterPayment(ObservableList<SaleItem> saleItems) {
+        new Thread(() -> {
+            try {
+                List<ApiService.StockUpdateItem> stockUpdates = new ArrayList<>();
+                for (SaleItem item : saleItems) {
+                    stockUpdates.add(new ApiService.StockUpdateItem(item.getId(), item.getQuantity()));
+                }
+
+                apiService.updateStock(stockUpdates);
+                System.out.println("Stock updated successfully");
+
+            } catch (Exception e) {
+                System.err.println("Stock update error: " + e.getMessage());
+            }
+        }).start();
     }
 
-    public void setupInvoiceButtons() {
-        // TODO: Setup invoice button event handlers
+    private void showPaymentSuccess() {
+        invoiceMessage.setVisible(true);
+        invoiceMessage.setManaged(true);
+
+        showAlert(Alert.AlertType.INFORMATION, "Payment Successful",
+                String.format("Payment processed successfully!\n\n" +
+                                "Sale ID: %s\n" +
+                                "Total: $%.2f\n" +
+                                "Paid: $%.2f\n" +
+                                "Change: $%.2f\n" +
+                                "Payment Method: %s",
+                        SaleDataService.getInstance().getCurrentCustomer().getSaleId(),
+                        SaleDataService.getInstance().getTotal(),
+                        new BigDecimal(paidTextField.getText()),
+                        new BigDecimal(paidTextField.getText()).subtract(SaleDataService.getInstance().getTotal()),
+                        selectedPaymentMethod));
+
+        SaleDataService.getInstance().clearSaleData();
     }
 
-    public void enablePaidInput(boolean enable) {
-        paidTextField.setDisable(!enable);
+    // Utility Methods
+    public void selectPaymentMethod(String method) {
+        selectedPaymentMethod = method;
+        System.out.println("Payment method selected: " + method);
+
+        if (cashButton != null) cashButton.setStyle("");
+        if (cardButton != null) cardButton.setStyle("");
+        if (checkButton != null) checkButton.setStyle("");
+
+        String selectedStyle = "-fx-background-color: #4CAF50; -fx-text-fill: white;";
+        if ("Cash".equals(method) && cashButton != null) {
+            cashButton.setStyle(selectedStyle);
+        } else if ("Card".equals(method) && cardButton != null) {
+            cardButton.setStyle(selectedStyle);
+        } else if ("Check".equals(method) && checkButton != null) {
+            checkButton.setStyle(selectedStyle);
+        }
+
+        paidTextField.setDisable(false);
+        paidTextField.requestFocus();
     }
 
-    public double getTotalAmount() {
-        // TODO: Extract total amount from label or data model
-        return 0.0;
+
+    public void calculateChange() {
+        try {
+            String paidText = paidTextField.getText().trim();
+            if (paidText.isEmpty()) {
+                changeLabel.setText("$0.00");
+                return;
+            }
+
+            BigDecimal paid = new BigDecimal(paidText);
+            BigDecimal total = SaleDataService.getInstance().getTotal();
+            BigDecimal change = paid.subtract(total);
+
+            if (change.compareTo(BigDecimal.ZERO) < 0) {
+                changeLabel.setText("$0.00");
+                changeLabel.setStyle("-fx-text-fill: red;");
+            } else {
+                changeLabel.setText(String.format("$%.2f", change));
+                changeLabel.setStyle("-fx-text-fill: green;");
+            }
+        } catch (NumberFormatException e) {
+            changeLabel.setText("$0.00");
+        }
     }
 
-    public String getSelectedPaymentMethod() {
-        // TODO: Return currently selected payment method
-        return "";
+    private void showAlert(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
-    public void resetPaymentForm() {
-        // TODO: Reset form to initial state
-        updatePriceLabels(0.0, 0.0, 0.0);
-        paidTextField.clear();
-        paidTextField.setDisable(true);
-
-        loadSaleItems();
-    }
-
-    public void validatePayment() {
-        // TODO: Validate payment before completion
+    private boolean showConfirmation(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        return alert.showAndWait().filter(response -> response == ButtonType.OK).isPresent();
     }
 }

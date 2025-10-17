@@ -1,10 +1,12 @@
 package com.qaldrin.posclient.controller;
 
 import com.qaldrin.posclient.dto.CustomerDTO;
+import com.qaldrin.posclient.service.SaleDataService;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.AnchorPane;
@@ -22,6 +24,8 @@ public class DashboardFormController implements Initializable {
     @FXML private AnchorPane navigationPane;
     @FXML private Label connectionStatusLabel;
     @FXML private Label notificationlabel;
+
+    private DashboardContentController dashboardContentController;
 
     // Navigation buttons
     @FXML private Button dashboardButton;
@@ -41,7 +45,24 @@ public class DashboardFormController implements Initializable {
      * Load Dashboard-content.fxml into primaryScene
      */
     private void loadDashboardContent() {
-        loadContent("/com/qaldrin/posclient/Dashboard-content.fxml");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/qaldrin/posclient/Dashboard-content.fxml"));
+            AnchorPane content = loader.load();
+
+            dashboardContentController = loader.getController();
+
+            primaryScene.getChildren().clear();
+            primaryScene.getChildren().add(content);
+            AnchorPane.setTopAnchor(content, 0.0);
+            AnchorPane.setBottomAnchor(content, 0.0);
+            AnchorPane.setLeftAnchor(content, 0.0);
+            AnchorPane.setRightAnchor(content, 0.0);
+
+            System.out.println("Successfully loaded Dashboard-content.fxml");
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Error loading Dashboard content");
+        }
     }
 
     /**
@@ -117,6 +138,30 @@ public class DashboardFormController implements Initializable {
     @FXML
     private void onPaymentButtonClick() {
         System.out.println("Payment clicked");
+
+        if (dashboardContentController == null) {
+            showAlert(Alert.AlertType.ERROR, "Error", "Dashboard not loaded properly!");
+            return;
+        }
+
+        if (dashboardContentController.getSaleItems().isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "No Items", "Please add items to the sale before proceeding to payment!");
+            return;
+        }
+
+        CustomerDTO customer = SaleDataService.getInstance().getCurrentCustomer();
+        if (customer == null) {
+            showAlert(Alert.AlertType.WARNING, "No Customer", "Please add customer information before proceeding to payment!");
+            return;
+        }
+
+        SaleDataService.getInstance().setSaleData(
+                dashboardContentController.getSaleItems(),
+                dashboardContentController.getSubtotal(),
+                dashboardContentController.getTax(),
+                dashboardContentController.getTotal()
+        );
+
         loadContent("/com/qaldrin/posclient/Payment-form.fxml");
     }
 
@@ -154,11 +199,12 @@ public class DashboardFormController implements Initializable {
             // Show the popup
             popupStage.showAndWait(); // Wait until popup is closed
 
-            // Check if customer was saved
             CustomerDTO savedCustomer = controller.getSavedCustomer();
             if (savedCustomer != null) {
                 System.out.println("Customer saved with Sale ID: " + savedCustomer.getSaleId());
-                // You can pass this information back to the dashboard if needed
+                SaleDataService.getInstance().setCustomer(savedCustomer);
+                showAlert(Alert.AlertType.INFORMATION, "Success",
+                        "Customer information saved! You can now proceed to payment.");
             } else {
                 System.out.println("Add Customer popup closed without saving");
             }
@@ -166,13 +212,16 @@ public class DashboardFormController implements Initializable {
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Error loading AddCustomer-form.fxml: " + e.getMessage());
-
-            // Show error alert to user
-            javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.ERROR);
-            alert.setTitle("Error");
-            alert.setHeaderText("Failed to open Add Customer form");
-            alert.setContentText("Error: " + e.getMessage());
-            alert.showAndWait();
+            showAlert(Alert.AlertType.ERROR, "Error",
+                    "Failed to open Add Customer form\n" + e.getMessage());
         }
+    }
+
+    private void showAlert(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }
