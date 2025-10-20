@@ -88,6 +88,7 @@ public class DashboardFormController implements Initializable {
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Error loading content from: " + fxmlPath);
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to load content: " + e.getMessage());
         }
     }
 
@@ -102,25 +103,27 @@ public class DashboardFormController implements Initializable {
         System.out.println("Product clicked");
         // TODO: Load product content when available
         // loadContent("/com/qaldrin/posclient/Product-content.fxml");
+        showAlert(Alert.AlertType.INFORMATION, "Coming Soon", "Product management feature is coming soon!");
     }
 
     @FXML
     private void onSettingButtonClick() {
         System.out.println("Settings clicked");
-        // TODO: Load settings content when available
-        // loadContent("/com/qaldrin/posclient/Settings-content.fxml");
+        loadContent("/com/qaldrin/posclient/setting-form.fxml");
     }
 
     @FXML
     private void onDeleteButtonClick() {
         System.out.println("Delete clicked");
         // Handle delete action for selected item in current view
+        showAlert(Alert.AlertType.INFORMATION, "Coming Soon", "Delete feature is coming soon!");
     }
 
     @FXML
     private void onQuantityButtonClick() {
         System.out.println("Quantity clicked");
         // Handle quantity modification for selected item
+        showAlert(Alert.AlertType.INFORMATION, "Coming Soon", "Quantity modification feature is coming soon!");
     }
 
     @FXML
@@ -133,6 +136,7 @@ public class DashboardFormController implements Initializable {
     private void onSyncDatabaseClick() {
         System.out.println("Sync Database clicked");
         // Handle database synchronization
+        showAlert(Alert.AlertType.INFORMATION, "Coming Soon", "Database sync feature is coming soon!");
     }
 
     @FXML
@@ -167,7 +171,6 @@ public class DashboardFormController implements Initializable {
 
     private void showAddCustomerPopup() {
         try {
-            // FIXED: Correct file name with hyphen
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/qaldrin/posclient/AddCustomer-form.fxml"));
             AnchorPane root = loader.load();
 
@@ -181,12 +184,12 @@ public class DashboardFormController implements Initializable {
 
             // Set modality to block interaction with parent window
             popupStage.initModality(Modality.APPLICATION_MODAL);
-            popupStage.initStyle(StageStyle.UNDECORATED); // Optional: Remove default window decorations
+            popupStage.initStyle(StageStyle.UNDECORATED);
 
             // Center the popup on screen
             popupStage.centerOnScreen();
 
-            // Optional: Add custom window styling (check if CSS exists first)
+            // Optional: Add custom window styling
             try {
                 URL cssUrl = getClass().getResource("/styles/main.css");
                 if (cssUrl != null) {
@@ -197,7 +200,7 @@ public class DashboardFormController implements Initializable {
             }
 
             // Show the popup
-            popupStage.showAndWait(); // Wait until popup is closed
+            popupStage.showAndWait();
 
             CustomerDTO savedCustomer = controller.getSavedCustomer();
             if (savedCustomer != null) {

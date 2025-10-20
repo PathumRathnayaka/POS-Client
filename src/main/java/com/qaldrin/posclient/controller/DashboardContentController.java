@@ -223,8 +223,8 @@ public class DashboardContentController implements Initializable {
         return getSubtotal().add(getTax());
     }
 
-    @FXML
-    private void removeSelectedItem() {
+    // Changed from private to public so it can be accessed from DashboardFormController
+    public void removeSelectedItem() {
         SaleItem selectedItem = saleTable.getSelectionModel().getSelectedItem();
         if (selectedItem != null) {
             saleItems.remove(selectedItem);
