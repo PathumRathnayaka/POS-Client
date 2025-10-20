@@ -3,7 +3,8 @@ module com.qaldrin.posclient {
     requires javafx.fxml;
     requires okhttp3;
     requires com.google.gson;
-    requires com.jfoenix;  // Add this line
+    requires com.jfoenix;
+    requires java.prefs;  // Add this line
 
     opens com.qaldrin.posclient to javafx.fxml;
     exports com.qaldrin.posclient;

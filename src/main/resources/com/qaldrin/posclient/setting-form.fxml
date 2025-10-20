@@ -2,22 +2,154 @@
 
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
+<AnchorPane prefHeight="717.0" prefWidth="1050.0" style="-fx-background-color: #f5f5f5;"
+            xmlns="http://javafx.com/javafx/20.0.1"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.qaldrin.posclient.controller.SettingFormController">
+    <children>
+        <!-- Title -->
+        <Label layoutX="30.0" layoutY="20.0" text="Settings">
+            <font>
+                <Font name="System Bold" size="28.0" />
+            </font>
+        </Label>
 
-<AnchorPane prefHeight="717.0" prefWidth="1050.0" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.qaldrin.posclient.controller.SettingFormController">
-   <children>
-      <Label layoutX="51.0" layoutY="30.0" text="Setting">
-         <font>
-            <Font name="System Bold" size="23.0" />
-         </font>
-      </Label>
-      <TextField layoutX="51.0" layoutY="107.0" prefHeight="25.0" prefWidth="317.0" promptText="192.168.1.100" />
-      <TextField layoutX="395.0" layoutY="107.0" prefHeight="25.0" prefWidth="194.0" promptText="8080" />
-      <Label layoutX="51.0" layoutY="84.0" text="IP address" />
-      <Label layoutX="395.0" layoutY="84.0" text="Port Number" />
-      <Button layoutX="53.0" layoutY="166.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="125.0" text="Save" />
-   </children>
+        <!-- Main Settings Panel -->
+        <VBox layoutX="30.0" layoutY="80.0" prefHeight="600.0" prefWidth="990.0"
+              spacing="20.0"
+              style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 30; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 2);">
+            <children>
+                <!-- Server Configuration Section -->
+                <Label text="Server Configuration">
+                    <font>
+                        <Font name="System Bold" size="20.0" />
+                    </font>
+                </Label>
+
+                <Separator prefWidth="930.0" />
+
+                <!-- Current URL Display -->
+                <Label fx:id="currentUrlLabel" text="Current Server URL: http://192.168.1.100:8080"
+                       style="-fx-font-size: 14px; -fx-text-fill: #2c3e50; -fx-font-weight: bold;" />
+
+                <!-- IP Address Field -->
+                <VBox spacing="8.0">
+                    <children>
+                        <Label text="Server IP Address" style="-fx-font-weight: bold; -fx-font-size: 14px;">
+                            <font>
+                                <Font size="14.0" />
+                            </font>
+                        </Label>
+                        <TextField fx:id="ipAddressField"
+                                   prefHeight="40.0"
+                                   prefWidth="400.0"
+                                   promptText="Enter IP address (e.g., 192.168.1.100 or localhost)"
+                                   style="-fx-background-radius: 5; -fx-border-radius: 5; -fx-border-color: #bdc3c7; -fx-padding: 8; -fx-font-size: 14px;" />
+                        <Label text="Enter the IP address of the server machine on your network"
+                               style="-fx-font-size: 12px; -fx-text-fill: #7f8c8d; -fx-font-style: italic;" />
+                    </children>
+                </VBox>
+
+                <!-- Port Number Field -->
+                <VBox spacing="8.0">
+                    <children>
+                        <Label text="Server Port Number" style="-fx-font-weight: bold; -fx-font-size: 14px;">
+                            <font>
+                                <Font size="14.0" />
+                            </font>
+                        </Label>
+                        <TextField fx:id="portField"
+                                   prefHeight="40.0"
+                                   prefWidth="200.0"
+                                   promptText="Enter port (e.g., 8080)"
+                                   style="-fx-background-radius: 5; -fx-border-radius: 5; -fx-border-color: #bdc3c7; -fx-padding: 8; -fx-font-size: 14px;" />
+                        <Label text="Typically 8080 for Spring Boot applications (valid range: 1-65535)"
+                               style="-fx-font-size: 12px; -fx-text-fill: #7f8c8d; -fx-font-style: italic;" />
+                    </children>
+                </VBox>
+
+                <!-- Status Label -->
+                <Label fx:id="statusLabel"
+                       text=" "
+                       style="-fx-font-size: 14px; -fx-font-weight: bold;"
+                       wrapText="true" />
+
+                <!-- Action Buttons -->
+                <HBox spacing="15.0" alignment="CENTER_LEFT">
+                    <children>
+                        <Button fx:id="saveButton"
+                                onAction="#onSaveSettings"
+                                prefHeight="45.0"
+                                prefWidth="150.0"
+                                style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand; -fx-font-size: 14px;"
+                                text="Save Settings">
+                            <font>
+                                <Font size="14.0" />
+                            </font>
+                        </Button>
+
+                        <Button fx:id="testConnectionButton"
+                                onAction="#onTestConnection"
+                                prefHeight="45.0"
+                                prefWidth="150.0"
+                                style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand; -fx-font-size: 14px;"
+                                text="Test Connection">
+                            <font>
+                                <Font size="14.0" />
+                            </font>
+                        </Button>
+
+                        <Button onAction="#onResetToDefaults"
+                                prefHeight="45.0"
+                                prefWidth="150.0"
+                                style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-cursor: hand; -fx-font-size: 14px;"
+                                text="Reset to Defaults">
+                            <font>
+                                <Font size="14.0" />
+                            </font>
+                        </Button>
+                    </children>
+                </HBox>
+
+                <Separator prefWidth="930.0" />
+
+                <!-- Instructions -->
+                <VBox spacing="10.0" style="-fx-background-color: #ecf0f1; -fx-padding: 15; -fx-background-radius: 5;">
+                    <children>
+                        <Label text="Instructions:" style="-fx-font-weight: bold; -fx-font-size: 14px;" />
+                        <Label text="1. Enter the IP address of the computer running the POS server"
+                               style="-fx-font-size: 13px;" wrapText="true" />
+                        <Label text="2. Enter the port number (default is 8080)"
+                               style="-fx-font-size: 13px;" wrapText="true" />
+                        <Label text="3. Click 'Test Connection' to verify the server is reachable"
+                               style="-fx-font-size: 13px;" wrapText="true" />
+                        <Label text="4. Click 'Save Settings' to apply and save the configuration"
+                               style="-fx-font-size: 13px;" wrapText="true" />
+                        <Label text="5. Settings are automatically saved and will be used for all future connections"
+                               style="-fx-font-size: 13px;" wrapText="true" />
+                    </children>
+                </VBox>
+
+                <!-- Network Tips -->
+                <VBox spacing="8.0">
+                    <children>
+                        <Label text="Network Tips:" style="-fx-font-weight: bold; -fx-font-size: 14px;" />
+                        <Label text="• For local testing, use 'localhost' or '127.0.0.1'"
+                               style="-fx-font-size: 12px; -fx-text-fill: #34495e;" wrapText="true" />
+                        <Label text="• For network access, find the server's IP using 'ipconfig' (Windows) or 'ifconfig' (Mac/Linux)"
+                               style="-fx-font-size: 12px; -fx-text-fill: #34495e;" wrapText="true" />
+                        <Label text="• Ensure both computers are on the same network and firewall allows connections"
+                               style="-fx-font-size: 12px; -fx-text-fill: #34495e;" wrapText="true" />
+                    </children>
+                </VBox>
+            </children>
+        </VBox>
+    </children>
 </AnchorPane>
