@@ -38,7 +38,9 @@ public class AddCustomerFormController {
 
     private Stage stage;
     private final ApiService apiService = new ApiService();
-    private CustomerDTO savedCustomer; // Store the saved customer
+
+    // Static variable to hold temporary customer data (NOT saved to server yet)
+    private static CustomerDTO tempCustomerDTO;
 
     @FXML
     public void initialize() {
@@ -91,51 +93,19 @@ public class AddCustomerFormController {
             return;
         }
 
-        // Disable buttons during save
-        saveButton.setDisable(true);
-        cancelButton.setDisable(true);
+        // Create customer DTO and store TEMPORARILY (not saved to server yet)
+        tempCustomerDTO = new CustomerDTO(saleId, contact, email.isEmpty() ? null : email);
 
-        // Create customer DTO
-        CustomerDTO customer = new CustomerDTO(saleId, contact, email.isEmpty() ? null : email);
+        System.out.println("Customer saved TEMPORARILY (not sent to server yet): " + tempCustomerDTO);
 
-        // Save customer in background thread
-        new Thread(() -> {
-            try {
-                CustomerDTO savedCustomerDTO = apiService.saveCustomer(customer);
+        showAlert(AlertType.INFORMATION, "Success",
+                "Customer information saved temporarily!\n\n" +
+                        "Sale ID: " + saleId +
+                        "\nContact: " + contact +
+                        "\n\nCustomer will be saved to server when payment is completed.");
 
-                // Update UI on JavaFX thread
-                Platform.runLater(() -> {
-                    this.savedCustomer = savedCustomerDTO;
-                    System.out.println("Customer saved successfully: " + savedCustomerDTO);
-
-                    showAlert(AlertType.INFORMATION, "Success",
-                            "Customer saved successfully!\n\nSale ID: " + savedCustomerDTO.getSaleId() +
-                                    "\nContact: " + savedCustomerDTO.getContact());
-
-                    // Close the dialog
-                    getStage().close();
-                });
-
-            } catch (Exception e) {
-                // Handle error on JavaFX thread
-                Platform.runLater(() -> {
-                    System.err.println("Failed to save customer: " + e.getMessage());
-                    e.printStackTrace();
-
-                    showAlert(AlertType.ERROR, "Error",
-                            "Failed to save customer!\n\n" +
-                                    "Error: " + e.getMessage() +
-                                    "\n\nPlease check:\n" +
-                                    "1. Server is running\n" +
-                                    "2. Network connection is active\n" +
-                                    "3. Server IP address is correct in ApiConfig");
-
-                    // Re-enable buttons
-                    saveButton.setDisable(false);
-                    cancelButton.setDisable(false);
-                });
-            }
-        }).start();
+        // Close the dialog
+        getStage().close();
     }
 
     @FXML
@@ -150,10 +120,28 @@ public class AddCustomerFormController {
     }
 
     /**
-     * Get the saved customer (null if not saved yet)
+     * Get the temporarily saved customer (null if not saved yet)
+     * This will be called by PaymentFormController to save to server
      */
-    public CustomerDTO getSavedCustomer() {
-        return savedCustomer;
+    public static CustomerDTO getTempCustomerDTO() {
+        return tempCustomerDTO;
+    }
+
+    /**
+     * Clear the temporary customer after payment is completed
+     */
+    public static void clearTempCustomerDTO() {
+        tempCustomerDTO = null;
+        System.out.println("Temporary customer data cleared");
+    }
+
+    /**
+     * Set temporary customer (used when resuming paused sales)
+     */
+    public static void setTempCustomerDTO(CustomerDTO customerDTO) {
+        tempCustomerDTO = customerDTO;
+        System.out.println("Customer data set in temp storage - Sale ID: " +
+                (customerDTO != null ? customerDTO.getSaleId() : "null"));
     }
 
     /**

@@ -11,143 +11,145 @@
 
 <AnchorPane fx:id="primaryScene" prefHeight="717.0" prefWidth="1050.0" style="-fx-background-color: #f5f5f5;" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.qaldrin.posclient.controller.PaymentFormController">
     <children>
+        <!-- LEFT SIDE: Items List -->
         <AnchorPane layoutX="16.0" layoutY="4.0" prefHeight="700.0" prefWidth="312.0">
             <children>
-                <!-- Added gray background and fx:id -->
-                <VBox fx:id="itemsVBox" layoutX="-2.0" layoutY="56.0" prefHeight="635.0" prefWidth="312.0" style="-fx-background-color: #d3d3d3;" />
-
                 <Label layoutX="14.0" layoutY="9.0" prefHeight="37.0" prefWidth="255.0" text="Items">
                     <font>
                         <Font name="System Bold" size="24.0" />
                     </font>
                 </Label>
+
+                <!-- Items VBox with gray background -->
+                <VBox fx:id="itemsVBox" layoutX="0.0" layoutY="56.0" prefHeight="635.0" prefWidth="312.0" spacing="5.0" style="-fx-background-color: #d3d3d3; -fx-padding: 10;" />
             </children>
         </AnchorPane>
-        <AnchorPane fx:id="invoiceMessage" layoutX="349.0" layoutY="6.0" prefHeight="700.0" prefWidth="694.0">
+
+        <!-- RIGHT SIDE: Payment Details -->
+        <AnchorPane layoutX="349.0" layoutY="6.0" prefHeight="700.0" prefWidth="694.0">
             <children>
+                <!-- Actions Label -->
                 <Label layoutX="27.0" layoutY="11.0" prefHeight="20.0" prefWidth="136.0" text="Actions">
                     <font>
                         <Font name="System Bold" size="23.0" />
                     </font>
                 </Label>
-                <Label layoutX="27.0" layoutY="117.0" text="Payment Type">
-                    <font>
-                        <Font size="20.0" />
-                    </font>
-                </Label>
 
-                <!-- Action Buttons -->
+                <!-- Action Buttons Row -->
                 <JFXButton fx:id="cancelButton" buttonType="RAISED" layoutX="27.0" layoutY="54.0" onAction="#onCancel" prefHeight="45.0" prefWidth="157.0" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5;" text="Cancel">
-                    <cursor>
-                        <Cursor fx:constant="HAND" />
-                    </cursor>
+                    <cursor><Cursor fx:constant="HAND" /></cursor>
                 </JFXButton>
 
-                <JFXButton fx:id="discountButton" buttonType="RAISED" layoutX="517.0" layoutY="54.0" onAction="#onDiscount" prefHeight="45.0" prefWidth="157.0" style="-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5;" text="Discount">
-                    <cursor>
-                        <Cursor fx:constant="HAND" />
-                    </cursor>
+                <JFXButton fx:id="taxesButton" buttonType="RAISED" layoutX="199.0" layoutY="54.0" onAction="#onTaxes" prefHeight="45.0" prefWidth="157.0" style="-fx-background-color: #ecf0f1; -fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-background-radius: 5;" text="Taxes">
+                    <cursor><Cursor fx:constant="HAND" /></cursor>
                 </JFXButton>
 
-                <JFXButton fx:id="taxesButton" buttonType="RAISED" layoutX="345.0" layoutY="54.0" onAction="#onTaxes" prefHeight="45.0" prefWidth="157.0" style="-fx-background-color: #ecf0f1; -fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-background-radius: 5;" text="Taxes">
-                    <cursor>
-                        <Cursor fx:constant="HAND" />
-                    </cursor>
+                <JFXButton fx:id="discountButton" buttonType="RAISED" layoutX="371.0" layoutY="54.0" onAction="#onDiscount" prefHeight="45.0" prefWidth="157.0" style="-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5;" text="Discount">
+                    <cursor><Cursor fx:constant="HAND" /></cursor>
                 </JFXButton>
+
+                <!-- Payment Type Section -->
+                <Label layoutX="27.0" layoutY="117.0" text="Payment Type">
+                    <font><Font size="20.0" /></font>
+                </Label>
 
                 <!-- Payment Method Buttons -->
-                <JFXButton fx:id="cashButton" buttonType="RAISED" layoutX="27.0" layoutY="170.0" onAction="#onCashPayment" prefHeight="45.0" prefWidth="157.0" style="-fx-background-color: #ecf0f1; -fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-background-radius: 5;" text="Cash">
-                    <cursor>
-                        <Cursor fx:constant="HAND" />
-                    </cursor>
+                <JFXButton fx:id="cashButton" buttonType="RAISED" layoutX="27.0" layoutY="150.0" onAction="#onCashPayment" prefHeight="45.0" prefWidth="157.0" style="-fx-background-color: #ecf0f1; -fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-background-radius: 5;" text="Cash">
+                    <cursor><Cursor fx:constant="HAND" /></cursor>
                 </JFXButton>
 
-                <JFXButton fx:id="checkButton" buttonType="RAISED" layoutX="27.0" layoutY="224.0" onAction="#onCheckPayment" prefHeight="45.0" prefWidth="157.0" style="-fx-background-color: #ecf0f1; -fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-background-radius: 5;" text="Check">
-                    <cursor>
-                        <Cursor fx:constant="HAND" />
-                    </cursor>
+                <JFXButton fx:id="checkButton" buttonType="RAISED" layoutX="27.0" layoutY="204.0" onAction="#onCheckPayment" prefHeight="45.0" prefWidth="157.0" style="-fx-background-color: #ecf0f1; -fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-background-radius: 5;" text="Check">
+                    <cursor><Cursor fx:constant="HAND" /></cursor>
                 </JFXButton>
 
-                <JFXButton fx:id="cardButton" buttonType="RAISED" layoutX="27.0" layoutY="282.0" onAction="#onCardPayment" prefHeight="45.0" prefWidth="157.0" style="-fx-background-color: #ecf0f1; -fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-background-radius: 5;" text="Card">
-                    <cursor>
-                        <Cursor fx:constant="HAND" />
-                    </cursor>
+                <JFXButton fx:id="cardButton" buttonType="RAISED" layoutX="27.0" layoutY="258.0" onAction="#onCardPayment" prefHeight="45.0" prefWidth="157.0" style="-fx-background-color: #ecf0f1; -fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-background-radius: 5;" text="Card">
+                    <cursor><Cursor fx:constant="HAND" /></cursor>
                 </JFXButton>
-
-                <!-- Price Summary -->
-                <Label fx:id="subTotalLabel" layoutX="27.0" layoutY="523.0" text="Sub Total: $0.00">
-                    <font>
-                        <Font size="20.0" />
-                    </font>
-                </Label>
-                <Label fx:id="taxLabel" layoutX="27.0" layoutY="553.0" text="Tax: $0.00">
-                    <font>
-                        <Font size="21.0" />
-                    </font>
-                </Label>
-                <Label fx:id="totalLabel" layoutX="27.0" layoutY="584.0" text="Total: $0.00">
-                    <font>
-                        <Font name="System Bold" size="22.0" />
-                    </font>
-                </Label>
 
                 <!-- Payment Section -->
-                <Label layoutX="226.0" layoutY="117.0" text="Payment">
-                    <font>
-                        <Font size="20.0" />
-                    </font>
-                </Label>
-                <Label fx:id="paymentTotalLabel" layoutX="228.0" layoutY="203.0" text="Total: $0.00">
-                    <font>
-                        <Font size="20.0" />
-                    </font>
-                </Label>
-                <TextField fx:id="paidTextField" disable="true" layoutX="228.0" layoutY="252.0" prefHeight="35.0" prefWidth="248.0" promptText="Paid" style="-fx-background-radius: 5; -fx-border-radius: 5; -fx-border-color: #bdc3c7; -fx-padding: 8;" />
-                <Label fx:id="changeLabel" layoutX="228.0" layoutY="304.0" text="Change: $0.00">
-                    <font>
-                        <Font size="16.0" />
-                    </font>
+                <Label layoutX="220.0" layoutY="117.0" text="Payment">
+                    <font><Font size="20.0" /></font>
                 </Label>
 
-                <!-- Customer Info -->
-                <Label fx:id="saleIdLabel" layoutX="30.0" layoutY="406.0" prefHeight="17.0" prefWidth="250.0" text="Sale ID: N/A">
-                    <font>
-                        <Font size="14.0" />
-                    </font>
-                </Label>
-                <Label fx:id="customerContactLabel" layoutX="28.0" layoutY="447.0" prefHeight="17.0" prefWidth="250.0" text="Customer Contact: N/A">
-                    <font>
-                        <Font size="14.0" />
-                    </font>
+                <!-- Wallet Balance Label -->
+                <Label fx:id="oldBalanceLabel" layoutX="220.0" layoutY="150.0" managed="false" style="-fx-font-size: 14px; -fx-text-fill: #7f8c8d;" text="Wallet Balance: $0.00" visible="false" />
+
+                <!-- Payment Total Label -->
+                <Label fx:id="paymentTotalLabel" layoutX="220.0" layoutY="175.0" text="Total: $0.00">
+                    <font><Font size="20.0" /></font>
                 </Label>
 
-                <!-- Invoice Buttons - Selectable like payment methods -->
-                <Button fx:id="printInvoiceButton" layoutX="521.0" layoutY="155.0" onAction="#onPrintInvoice" prefHeight="40.0" prefWidth="150.0" style="-fx-background-color: #ecf0f1; -fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-background-radius: 5;" text="Print Invoice">
-                    <cursor>
-                        <Cursor fx:constant="HAND" />
-                    </cursor>
+                <!-- Paid Amount TextField -->
+                <TextField fx:id="paidTextField" disable="true" layoutX="220.0" layoutY="210.0" prefHeight="35.0" prefWidth="248.0" promptText="Paid" style="-fx-background-radius: 5; -fx-border-radius: 5; -fx-border-color: #bdc3c7; -fx-padding: 8;" />
+
+                <!-- Change Label -->
+                <Label fx:id="changeLabel" layoutX="220.0" layoutY="258.0" text="Change: $0.00">
+                    <font><Font size="16.0" /></font>
+                </Label>
+
+                <!-- Add to Wallet Button -->
+                <Button fx:id="addwallet" layoutX="220.0" layoutY="290.0" managed="false" mnemonicParsing="false" onAction="#addwalletOnClick" prefHeight="35.0" prefWidth="150.0" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5;" text="Add to Wallet" visible="false">
+                    <cursor><Cursor fx:constant="HAND" /></cursor>
                 </Button>
 
-                <Button fx:id="emailInvoiceButton" layoutX="521.0" layoutY="219.0" onAction="#onEmailInvoice" prefHeight="40.0" prefWidth="150.0" style="-fx-background-color: #ecf0f1; -fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-background-radius: 5;" text="Email Invoice">
-                    <cursor>
-                        <Cursor fx:constant="HAND" />
-                    </cursor>
+                <!-- Invoice Buttons Section -->
+                <Label layoutX="500.0" layoutY="117.0" text="Invoice">
+                    <font><Font size="18.0" /></font>
+                </Label>
+
+                <Button fx:id="printInvoiceButton" layoutX="500.0" layoutY="150.0" onAction="#onPrintInvoice" prefHeight="40.0" prefWidth="150.0" style="-fx-background-color: #ecf0f1; -fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-background-radius: 5;" text="Print Invoice">
+                    <cursor><Cursor fx:constant="HAND" /></cursor>
                 </Button>
 
-                <Button fx:id="pdfInvoiceButton" layoutX="521.0" layoutY="284.0" onAction="#onPdfInvoice" prefHeight="40.0" prefWidth="150.0" style="-fx-background-color: #ecf0f1; -fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-background-radius: 5;" text="PDF Invoice">
-                    <cursor>
-                        <Cursor fx:constant="HAND" />
-                    </cursor>
+                <Button fx:id="emailInvoiceButton" layoutX="500.0" layoutY="200.0" onAction="#onEmailInvoice" prefHeight="40.0" prefWidth="150.0" style="-fx-background-color: #ecf0f1; -fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-background-radius: 5;" text="Email Invoice">
+                    <cursor><Cursor fx:constant="HAND" /></cursor>
                 </Button>
+
+                <Button fx:id="pdfInvoiceButton" layoutX="500.0" layoutY="250.0" onAction="#onPdfInvoice" prefHeight="40.0" prefWidth="150.0" style="-fx-background-color: #ecf0f1; -fx-text-fill: #2c3e50; -fx-font-weight: bold; -fx-background-radius: 5;" text="PDF Invoice">
+                    <cursor><Cursor fx:constant="HAND" /></cursor>
+                </Button>
+
+                <!-- Customer Info Section -->
+                <Label layoutX="30.0" layoutY="340.0" text="Customer Information">
+                    <font><Font name="System Bold" size="16.0" /></font>
+                </Label>
+
+                <Label fx:id="saleIdLabel" layoutX="30.0" layoutY="370.0" prefHeight="17.0" prefWidth="350.0" text="Sale ID: N/A">
+                    <font><Font size="14.0" /></font>
+                </Label>
+
+                <Label fx:id="customerContactLabel" layoutX="30.0" layoutY="395.0" prefHeight="17.0" prefWidth="350.0" text="Customer Contact: N/A">
+                    <font><Font size="14.0" /></font>
+                </Label>
+
+                <!-- Price Summary Section -->
+                <Label layoutX="27.0" layoutY="450.0" text="Price Summary">
+                    <font><Font name="System Bold" size="16.0" /></font>
+                </Label>
+
+                <Label fx:id="subTotalLabel" layoutX="27.0" layoutY="480.0" text="Sub Total: $0.00">
+                    <font><Font size="18.0" /></font>
+                </Label>
+
+                <Label fx:id="taxLabel" layoutX="27.0" layoutY="510.0" text="Tax: $0.00">
+                    <font><Font size="18.0" /></font>
+                </Label>
+
+                <Label fx:id="totalLabel" layoutX="27.0" layoutY="540.0" text="Total: $0.00">
+                    <font><Font name="System Bold" size="20.0" /></font>
+                </Label>
 
                 <!-- Done Button -->
-                <JFXButton fx:id="doneButton" buttonType="RAISED" disable="true" layoutX="510.0" layoutY="561.0" onAction="#onDone" prefHeight="45.0" prefWidth="157.0" style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5;" text="Done">
-                    <cursor>
-                        <Cursor fx:constant="HAND" />
-                    </cursor>
+                <JFXButton fx:id="doneButton" buttonType="RAISED" layoutX="448.0" layoutY="572.0" onAction="#onDone" prefHeight="34.0" prefWidth="195.0" style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-font-size: 18px;" text="Complete Payment">
+                    <cursor><Cursor fx:constant="HAND" /></cursor>
                 </JFXButton>
-                <Label fx:id="oldBalanceLabel" layoutX="229.0" layoutY="175.0" text="Old Balance:" />
-                <Button fx:id="addwallet" layoutX="580.0" layoutY="404.0" mnemonicParsing="false" onAction="#addwalletOnClick" text="Add Wallet" />
+            </children>
+        </AnchorPane>
+
+        <!-- Invoice Message Overlay (Hidden by default) -->
+        <AnchorPane fx:id="invoiceMessage" layoutX="0.0" layoutY="0.0" managed="false" prefHeight="717.0" prefWidth="1050.0" style="-fx-background-color: rgba(0, 0, 0, 0.7);" visible="false">
+            <children>
+                <Label layoutX="350.0" layoutY="300.0" style="-fx-font-size: 30px; -fx-font-weight: bold;" text="Processing Payment..." textFill="WHITE" />
             </children>
         </AnchorPane>
     </children>

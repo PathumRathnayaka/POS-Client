@@ -107,8 +107,6 @@ public class DashboardFormController implements Initializable {
     @FXML
     private void onProductClick() {
         System.out.println("Product clicked");
-        // TODO: Load product content when available
-        // loadContent("/com/qaldrin/posclient/Product-content.fxml");
         showAlert(Alert.AlertType.INFORMATION, "Coming Soon", "Product management feature is coming soon!");
     }
 
@@ -121,14 +119,12 @@ public class DashboardFormController implements Initializable {
     @FXML
     private void onDeleteButtonClick() {
         System.out.println("Delete clicked");
-        // Handle delete action for selected item in current view
         showAlert(Alert.AlertType.INFORMATION, "Coming Soon", "Delete feature is coming soon!");
     }
 
     @FXML
     private void onQuantityButtonClick() {
         System.out.println("Quantity clicked");
-        // Handle quantity modification for selected item
         showAlert(Alert.AlertType.INFORMATION, "Coming Soon", "Quantity modification feature is coming soon!");
     }
 
@@ -136,12 +132,23 @@ public class DashboardFormController implements Initializable {
     private void onNewCustomerButtonClick() {
         System.out.println("New Customer clicked");
         showAddCustomerPopup();
+
+        // After popup closes, check if customer was saved temporarily
+        CustomerDTO tempCustomer = AddCustomerFormController.getTempCustomerDTO();
+        if (tempCustomer != null) {
+            System.out.println("Customer saved temporarily - Sale ID: " + tempCustomer.getSaleId());
+            SaleDataService.getInstance().setCustomer(tempCustomer);
+            showAlert(Alert.AlertType.INFORMATION, "Customer Info Saved",
+                    "Customer information saved temporarily!\n\n" +
+                            "Sale ID: " + tempCustomer.getSaleId() +
+                            "\nContact: " + tempCustomer.getContact() +
+                            "\n\nCustomer will be saved to server when you complete payment.");
+        }
     }
 
     @FXML
     private void onSyncDatabaseClick() {
         System.out.println("Sync Database clicked");
-        // Handle database synchronization
         showAlert(Alert.AlertType.INFORMATION, "Coming Soon", "Database sync feature is coming soon!");
     }
 
@@ -159,12 +166,15 @@ public class DashboardFormController implements Initializable {
             return;
         }
 
-        CustomerDTO customer = SaleDataService.getInstance().getCurrentCustomer();
-        if (customer == null) {
-            showAlert(Alert.AlertType.WARNING, "No Customer", "Please add customer information before proceeding to payment!");
+        // Check if customer info exists in temp storage
+        CustomerDTO tempCustomer = AddCustomerFormController.getTempCustomerDTO();
+        if (tempCustomer == null) {
+            showAlert(Alert.AlertType.WARNING, "No Customer",
+                    "Please add customer information before proceeding to payment!");
             return;
         }
 
+        // Store sale data in SaleDataService
         SaleDataService.getInstance().setSaleData(
                 dashboardContentController.getSaleItems(),
                 dashboardContentController.getSubtotal(),
@@ -172,7 +182,40 @@ public class DashboardFormController implements Initializable {
                 dashboardContentController.getTotal()
         );
 
-        loadContent("/com/qaldrin/posclient/Payment-form.fxml");
+        // Also ensure customer is stored
+        SaleDataService.getInstance().setCustomer(tempCustomer);
+
+        System.out.println("Proceeding to payment with customer: " + tempCustomer.getSaleId());
+
+        // Load payment form and call loadSaleData()
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/qaldrin/posclient/Payment-form.fxml"));
+            AnchorPane content = loader.load();
+
+            // Get the controller and call loadSaleData()
+            PaymentFormController paymentController = loader.getController();
+            if (paymentController != null) {
+                paymentController.loadSaleData();
+                System.out.println("Called loadSaleData() on PaymentFormController");
+            }
+
+            // Clear existing content
+            primaryScene.getChildren().clear();
+
+            // Add new content and anchor it to fill the parent
+            primaryScene.getChildren().add(content);
+            AnchorPane.setTopAnchor(content, 0.0);
+            AnchorPane.setBottomAnchor(content, 0.0);
+            AnchorPane.setLeftAnchor(content, 0.0);
+            AnchorPane.setRightAnchor(content, 0.0);
+
+            System.out.println("Payment form loaded successfully");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Error loading payment form: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to load payment form: " + e.getMessage());
+        }
     }
 
     private void showAddCustomerPopup() {
@@ -205,18 +248,8 @@ public class DashboardFormController implements Initializable {
                 System.out.println("CSS file not found, skipping styling");
             }
 
-            // Show the popup
+            // Show the popup and wait for it to close
             popupStage.showAndWait();
-
-            CustomerDTO savedCustomer = controller.getSavedCustomer();
-            if (savedCustomer != null) {
-                System.out.println("Customer saved with Sale ID: " + savedCustomer.getSaleId());
-                SaleDataService.getInstance().setCustomer(savedCustomer);
-                showAlert(Alert.AlertType.INFORMATION, "Success",
-                        "Customer information saved! You can now proceed to payment.");
-            } else {
-                System.out.println("Add Customer popup closed without saving");
-            }
 
         } catch (IOException e) {
             e.printStackTrace();

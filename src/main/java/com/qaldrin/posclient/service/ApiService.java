@@ -2,10 +2,7 @@ package com.qaldrin.posclient.service;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.qaldrin.posclient.dto.CustomerDTO;
-import com.qaldrin.posclient.dto.PaymentRequestDTO;
-import com.qaldrin.posclient.dto.ProductWithQuantityDTO;
-import com.qaldrin.posclient.dto.WalletDTO;
+import com.qaldrin.posclient.dto.*;
 import com.qaldrin.posclient.util.ApiConfig;
 import okhttp3.*;
 
@@ -265,7 +262,17 @@ public class ApiService {
             }
 
             String responseBody = response.body().string();
-            return gson.fromJson(responseBody, WalletDTO.class);
+            WalletResponseDTO walletResponse = gson.fromJson(responseBody, WalletResponseDTO.class);
+
+            // Convert to WalletDTO
+            WalletDTO walletDTO = new WalletDTO();
+            walletDTO.setSuccess(walletResponse.isSuccess());
+            walletDTO.setMessage(walletResponse.getMessage());
+            walletDTO.setCustomerContact(walletResponse.getCustomerContact());
+            walletDTO.setBalance(walletResponse.getBalance());
+            walletDTO.setLastUpdated(walletResponse.getLastUpdated());
+
+            return walletDTO;
         }
     }
 
@@ -288,7 +295,7 @@ public class ApiService {
             }
 
             String responseBody = response.body().string();
-            WalletDTO walletDTO = gson.fromJson(responseBody, WalletDTO.class);
+            WalletBalanceDTO walletDTO = gson.fromJson(responseBody, WalletBalanceDTO.class);
             return walletDTO.getBalance() != null ? walletDTO.getBalance() : BigDecimal.ZERO;
         }
     }
@@ -297,8 +304,8 @@ public class ApiService {
      * Add amount to customer wallet
      */
     public WalletDTO addToWallet(String customerContact, BigDecimal amount) throws IOException {
-        WalletTransactionRequest request = new WalletTransactionRequest(customerContact, amount);
-        String json = gson.toJson(request);
+        WalletTransactionDTO transactionDTO = new WalletTransactionDTO(customerContact, amount);
+        String json = gson.toJson(transactionDTO);
         RequestBody body = RequestBody.create(json, JSON);
 
         Request httpRequest = new Request.Builder()
@@ -315,7 +322,19 @@ public class ApiService {
 
             String responseBody = response.body().string();
             System.out.println("Add to wallet response: " + responseBody);
-            return gson.fromJson(responseBody, WalletDTO.class);
+
+            // Parse the response to WalletResponseDTO first
+            WalletResponseDTO walletResponse = gson.fromJson(responseBody, WalletResponseDTO.class);
+
+            // Convert to WalletDTO for compatibility
+            WalletDTO walletDTO = new WalletDTO();
+            walletDTO.setSuccess(walletResponse.isSuccess());
+            walletDTO.setMessage(walletResponse.getMessage());
+            walletDTO.setCustomerContact(walletResponse.getCustomerContact());
+            walletDTO.setBalance(walletResponse.getBalance());
+            walletDTO.setLastUpdated(walletResponse.getLastUpdated());
+
+            return walletDTO;
         }
     }
 
@@ -323,8 +342,8 @@ public class ApiService {
      * Deduct amount from customer wallet
      */
     public WalletDTO deductFromWallet(String customerContact, BigDecimal amount) throws IOException {
-        WalletTransactionRequest request = new WalletTransactionRequest(customerContact, amount);
-        String json = gson.toJson(request);
+        WalletTransactionDTO transactionDTO = new WalletTransactionDTO(customerContact, amount);
+        String json = gson.toJson(transactionDTO);
         RequestBody body = RequestBody.create(json, JSON);
 
         Request httpRequest = new Request.Builder()
@@ -341,7 +360,19 @@ public class ApiService {
 
             String responseBody = response.body().string();
             System.out.println("Deduct from wallet response: " + responseBody);
-            return gson.fromJson(responseBody, WalletDTO.class);
+
+            // Parse the response to WalletResponseDTO first
+            WalletResponseDTO walletResponse = gson.fromJson(responseBody, WalletResponseDTO.class);
+
+            // Convert to WalletDTO for compatibility
+            WalletDTO walletDTO = new WalletDTO();
+            walletDTO.setSuccess(walletResponse.isSuccess());
+            walletDTO.setMessage(walletResponse.getMessage());
+            walletDTO.setCustomerContact(walletResponse.getCustomerContact());
+            walletDTO.setBalance(walletResponse.getBalance());
+            walletDTO.setLastUpdated(walletResponse.getLastUpdated());
+
+            return walletDTO;
         }
     }
 
@@ -361,8 +392,8 @@ public class ApiService {
             }
 
             String responseBody = response.body().string();
-            WalletDTO walletDTO = gson.fromJson(responseBody, WalletDTO.class);
-            return walletDTO.getWalletExists() != null && walletDTO.getWalletExists();
+            WalletExistsDTO walletDTO = gson.fromJson(responseBody, WalletExistsDTO.class);
+            return walletDTO.isExists();
         }
     }
 
