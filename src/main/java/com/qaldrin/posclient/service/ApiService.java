@@ -5,11 +5,13 @@ import com.google.gson.reflect.TypeToken;
 import com.qaldrin.posclient.dto.CustomerDTO;
 import com.qaldrin.posclient.dto.PaymentRequestDTO;
 import com.qaldrin.posclient.dto.ProductWithQuantityDTO;
+import com.qaldrin.posclient.dto.WalletDTO;
 import com.qaldrin.posclient.util.ApiConfig;
 import okhttp3.*;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -245,6 +247,151 @@ public class ApiService {
 
         public void setQuantity(Integer quantity) {
             this.quantity = quantity;
+        }
+    }
+    public WalletDTO getWalletByContact(String contact) throws IOException {
+        String url = ApiConfig.getWalletByContactUrl(contact);
+        Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                if (response.code() == 404) {
+                    return null; // Wallet not found
+                }
+                throw new IOException("Failed to fetch wallet: " + response);
+            }
+
+            String responseBody = response.body().string();
+            return gson.fromJson(responseBody, WalletDTO.class);
+        }
+    }
+
+    /**
+     * Get wallet balance for a customer
+     */
+    public BigDecimal getWalletBalance(String contact) throws IOException {
+        String url = ApiConfig.getWalletBalanceUrl(contact);
+        Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                if (response.code() == 404) {
+                    return BigDecimal.ZERO; // No wallet found
+                }
+                throw new IOException("Failed to fetch wallet balance: " + response);
+            }
+
+            String responseBody = response.body().string();
+            WalletDTO walletDTO = gson.fromJson(responseBody, WalletDTO.class);
+            return walletDTO.getBalance() != null ? walletDTO.getBalance() : BigDecimal.ZERO;
+        }
+    }
+
+    /**
+     * Add amount to customer wallet
+     */
+    public WalletDTO addToWallet(String customerContact, BigDecimal amount) throws IOException {
+        WalletTransactionRequest request = new WalletTransactionRequest(customerContact, amount);
+        String json = gson.toJson(request);
+        RequestBody body = RequestBody.create(json, JSON);
+
+        Request httpRequest = new Request.Builder()
+                .url(ApiConfig.getWalletAddUrl())
+                .post(body)
+                .build();
+
+        try (Response response = client.newCall(httpRequest).execute()) {
+            if (!response.isSuccessful()) {
+                String errorBody = response.body() != null ? response.body().string() : "Unknown error";
+                System.err.println("Add to wallet failed: " + errorBody);
+                throw new IOException("Failed to add to wallet: " + response.code() + " - " + errorBody);
+            }
+
+            String responseBody = response.body().string();
+            System.out.println("Add to wallet response: " + responseBody);
+            return gson.fromJson(responseBody, WalletDTO.class);
+        }
+    }
+
+    /**
+     * Deduct amount from customer wallet
+     */
+    public WalletDTO deductFromWallet(String customerContact, BigDecimal amount) throws IOException {
+        WalletTransactionRequest request = new WalletTransactionRequest(customerContact, amount);
+        String json = gson.toJson(request);
+        RequestBody body = RequestBody.create(json, JSON);
+
+        Request httpRequest = new Request.Builder()
+                .url(ApiConfig.getWalletDeductUrl())
+                .post(body)
+                .build();
+
+        try (Response response = client.newCall(httpRequest).execute()) {
+            if (!response.isSuccessful()) {
+                String errorBody = response.body() != null ? response.body().string() : "Unknown error";
+                System.err.println("Deduct from wallet failed: " + errorBody);
+                throw new IOException("Failed to deduct from wallet: " + response.code() + " - " + errorBody);
+            }
+
+            String responseBody = response.body().string();
+            System.out.println("Deduct from wallet response: " + responseBody);
+            return gson.fromJson(responseBody, WalletDTO.class);
+        }
+    }
+
+    /**
+     * Check if customer has a wallet
+     */
+    public boolean checkWalletExists(Long customerId) throws IOException {
+        String url = ApiConfig.getWalletExistsUrl(customerId);
+        Request request = new Request.Builder()
+                .url(url)
+                .get()
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                return false;
+            }
+
+            String responseBody = response.body().string();
+            WalletDTO walletDTO = gson.fromJson(responseBody, WalletDTO.class);
+            return walletDTO.getWalletExists() != null && walletDTO.getWalletExists();
+        }
+    }
+
+    /**
+     * Inner class for wallet transaction requests
+     */
+    public static class WalletTransactionRequest {
+        private String customerContact;
+        private BigDecimal amount;
+
+        public WalletTransactionRequest(String customerContact, BigDecimal amount) {
+            this.customerContact = customerContact;
+            this.amount = amount;
+        }
+
+        public String getCustomerContact() {
+            return customerContact;
+        }
+
+        public void setCustomerContact(String customerContact) {
+            this.customerContact = customerContact;
+        }
+
+        public BigDecimal getAmount() {
+            return amount;
+        }
+
+        public void setAmount(BigDecimal amount) {
+            this.amount = amount;
         }
     }
 }

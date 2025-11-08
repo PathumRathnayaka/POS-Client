@@ -29,6 +29,11 @@ public class ApiConfig {
     public static final String CUSTOMER_BY_SALE_ID_ENDPOINT = "/api/customers/sale-id";
     public static final String PAYMENTS_ENDPOINT = "/api/payments/process";
     public static final String STOCK_UPDATE_ENDPOINT = "/api/stock/update";
+    public static final String WALLET_BY_CONTACT_ENDPOINT = "/api/wallets/contact";
+    public static final String WALLET_BALANCE_ENDPOINT = "/api/wallets/balance";
+    public static final String WALLET_ADD_ENDPOINT = "/api/wallets/add";
+    public static final String WALLET_DEDUCT_ENDPOINT = "/api/wallets/deduct";
+    public static final String WALLET_EXISTS_ENDPOINT = "/api/wallets/exists";
 
     /**
      * Load saved settings from preferences
@@ -134,5 +139,40 @@ public class ApiConfig {
      */
     public static String getStockUpdateUrl() {
         return getFullUrl(STOCK_UPDATE_ENDPOINT);
+    }
+
+    /**
+     * Get wallet by contact URL
+     */
+    public static String getWalletByContactUrl(String contact) {
+        return getFullUrl(WALLET_BY_CONTACT_ENDPOINT) + "/" + contact;
+    }
+
+    /**
+     * Get wallet balance URL
+     */
+    public static String getWalletBalanceUrl(String contact) {
+        return getFullUrl(WALLET_BALANCE_ENDPOINT) + "/" + contact;
+    }
+
+    /**
+     * Get wallet add URL
+     */
+    public static String getWalletAddUrl() {
+        return getFullUrl(WALLET_ADD_ENDPOINT);
+    }
+
+    /**
+     * Get wallet deduct URL
+     */
+    public static String getWalletDeductUrl() {
+        return getFullUrl(WALLET_DEDUCT_ENDPOINT);
+    }
+
+    /**
+     * Get wallet exists URL
+     */
+    public static String getWalletExistsUrl(Long customerId) {
+        return getFullUrl(WALLET_EXISTS_ENDPOINT) + "/" + customerId;
     }
 }

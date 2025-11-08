@@ -1,9 +1,6 @@
 package com.qaldrin.posclient.controller;
 
-import com.qaldrin.posclient.dto.CustomerDTO;
-import com.qaldrin.posclient.dto.PaymentRequestDTO;
-import com.qaldrin.posclient.dto.PaymentResponseDTO;
-import com.qaldrin.posclient.dto.SaleItemDTO;
+import com.qaldrin.posclient.dto.*;
 import com.qaldrin.posclient.model.SaleItem;
 import com.qaldrin.posclient.service.ApiService;
 import com.qaldrin.posclient.service.SaleDataService;
@@ -57,6 +54,9 @@ public class PaymentFormController implements Initializable {
     @FXML private Button emailInvoiceButton;
     @FXML private Button pdfInvoiceButton;
 
+    private BigDecimal walletBalance = BigDecimal.ZERO;
+    private BigDecimal walletBalanceUsed = BigDecimal.ZERO;
+
 
 
     @Override
@@ -96,6 +96,101 @@ public class PaymentFormController implements Initializable {
         totalLabel.setText(String.format("$%.2f", total));
         paymentTotalLabel.setText(String.format("$%.2f", total));
         changeLabel.setText("$0.00");
+
+        // Load wallet balance for the customer
+        loadWalletBalance(customer.getContact());
+    }
+
+    private void loadWalletBalance(String customerContact) {
+        // Check if it's a walk-in customer
+        if ("WALK-IN".equalsIgnoreCase(customerContact)) {
+            Platform.runLater(() -> {
+                if (oldBalanceLabel != null) {
+                    oldBalanceLabel.setVisible(false);
+                    oldBalanceLabel.setManaged(false);
+                }
+                if (addwallet != null) {
+                    addwallet.setVisible(false);
+                    addwallet.setManaged(false);
+                }
+            });
+            return;
+        }
+
+        // Load wallet in background thread
+        new Thread(() -> {
+            try {
+                BigDecimal balance = apiService.getWalletBalance(customerContact);
+                walletBalance = balance;
+
+                Platform.runLater(() -> {
+                    if (oldBalanceLabel != null) {
+                        if (balance.compareTo(BigDecimal.ZERO) > 0) {
+                            oldBalanceLabel.setText(String.format("Wallet Balance: $%.2f", balance));
+                            oldBalanceLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #27ae60; -fx-font-weight: bold;");
+
+                            // Calculate wallet usage
+                            applyWalletBalance();
+                        } else {
+                            oldBalanceLabel.setText("Wallet Balance: $0.00");
+                            oldBalanceLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #7f8c8d;");
+                        }
+                        oldBalanceLabel.setVisible(true);
+                        oldBalanceLabel.setManaged(true);
+                    }
+
+                    if (addwallet != null) {
+                        addwallet.setVisible(true);
+                        addwallet.setManaged(true);
+                    }
+                });
+
+                System.out.println("Wallet balance loaded: $" + balance);
+
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    if (oldBalanceLabel != null) {
+                        oldBalanceLabel.setText("Wallet Balance: $0.00");
+                        oldBalanceLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #7f8c8d;");
+                    }
+                });
+                System.err.println("Error loading wallet balance: " + e.getMessage());
+            }
+        }).start();
+    }
+    /**
+     * Apply wallet balance to reduce payment amount
+     */
+    private void applyWalletBalance() {
+        if (walletBalance.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+
+        SaleDataService dataService = SaleDataService.getInstance();
+        BigDecimal total = dataService.getTotal();
+
+        // Calculate how much wallet balance to use
+        if (walletBalance.compareTo(total) >= 0) {
+            // Wallet covers entire amount
+            walletBalanceUsed = total;
+            total = BigDecimal.ZERO;
+        } else {
+            // Wallet covers partial amount
+            walletBalanceUsed = walletBalance;
+            total = total.subtract(walletBalance);
+        }
+
+        // Update payment total label
+        if (paymentTotalLabel != null) {
+            if (walletBalanceUsed.compareTo(BigDecimal.ZERO) > 0) {
+                paymentTotalLabel.setText(String.format("Total: $%.2f (Wallet: -$%.2f)",
+                        total, walletBalanceUsed));
+            } else {
+                paymentTotalLabel.setText(String.format("Total: $%.2f", total));
+            }
+        }
+
+        System.out.println("Wallet balance applied - Used: $" + walletBalanceUsed + ", Remaining to pay: $" + total);
     }
 
     private void displaySaleItems(ObservableList<SaleItem> saleItems) {
@@ -208,16 +303,20 @@ public class PaymentFormController implements Initializable {
 
         try {
             BigDecimal paidAmount = new BigDecimal(paidText);
-            BigDecimal totalAmount = SaleDataService.getInstance().getTotal();
+            SaleDataService dataService = SaleDataService.getInstance();
+            BigDecimal originalTotal = dataService.getTotal();
 
-            if (paidAmount.compareTo(totalAmount) < 0) {
+            // Calculate actual amount to pay after wallet deduction
+            BigDecimal amountToPay = originalTotal.subtract(walletBalanceUsed);
+
+            if (paidAmount.compareTo(amountToPay) < 0) {
                 showAlert(Alert.AlertType.WARNING, "Insufficient Amount",
-                        String.format("Paid amount ($%.2f) is less than total ($%.2f)",
-                                paidAmount, totalAmount));
+                        String.format("Paid amount ($%.2f) is less than amount to pay ($%.2f)",
+                                paidAmount, amountToPay));
                 return;
             }
 
-            processPayment(paidAmount);
+            processPayment(paidAmount, originalTotal, amountToPay);
 
         } catch (NumberFormatException e) {
             showAlert(Alert.AlertType.ERROR, "Invalid Amount",
@@ -225,7 +324,7 @@ public class PaymentFormController implements Initializable {
         }
     }
 
-    private void processPayment(BigDecimal paidAmount) {
+    private void processPayment(BigDecimal paidAmount, BigDecimal originalTotal, BigDecimal amountToPay) {
         SaleDataService dataService = SaleDataService.getInstance();
         CustomerDTO customer = dataService.getCurrentCustomer();
         ObservableList<SaleItem> saleItems = dataService.getCurrentSaleItems();
@@ -250,25 +349,40 @@ public class PaymentFormController implements Initializable {
         paymentRequest.setSubTotal(dataService.getSubtotal());
         paymentRequest.setTaxAmount(dataService.getTax());
         paymentRequest.setDiscountAmount(BigDecimal.ZERO);
-        paymentRequest.setTotalAmount(dataService.getTotal());
+        paymentRequest.setTotalAmount(originalTotal); // Use original total for records
         paymentRequest.setPaidAmount(paidAmount);
-        paymentRequest.setChangeAmount(paidAmount.subtract(dataService.getTotal()));
+        paymentRequest.setChangeAmount(paidAmount.subtract(amountToPay));
         paymentRequest.setPaymentMethod(selectedPaymentMethod);
 
         new Thread(() -> {
             try {
+                // Process payment first
                 boolean success = apiService.processPayment(paymentRequest);
 
-                Platform.runLater(() -> {
-                    if (success) {
+                if (success) {
+                    // Deduct wallet balance if used
+                    if (walletBalanceUsed.compareTo(BigDecimal.ZERO) > 0 &&
+                            !"WALK-IN".equalsIgnoreCase(customer.getContact())) {
+                        try {
+                            apiService.deductFromWallet(customer.getContact(), walletBalanceUsed);
+                            System.out.println("Deducted $" + walletBalanceUsed + " from wallet");
+                        } catch (Exception we) {
+                            System.err.println("Failed to deduct from wallet: " + we.getMessage());
+                            // Continue even if wallet deduction fails
+                        }
+                    }
+
+                    Platform.runLater(() -> {
                         paymentProcessed = true;
                         updateStockAfterPayment(saleItems);
-                        showPaymentSuccess();
-                    } else {
+                        showPaymentSuccess(originalTotal, amountToPay, paidAmount);
+                    });
+                } else {
+                    Platform.runLater(() -> {
                         showAlert(Alert.AlertType.ERROR, "Payment Failed",
                                 "Failed to process payment. Please try again.");
-                    }
-                });
+                    });
+                }
 
             } catch (Exception e) {
                 Platform.runLater(() -> {
@@ -299,24 +413,31 @@ public class PaymentFormController implements Initializable {
         }).start();
     }
 
-    private void showPaymentSuccess() {
+    private void showPaymentSuccess(BigDecimal originalTotal, BigDecimal amountToPay, BigDecimal paidAmount) {
         invoiceMessage.setVisible(true);
         invoiceMessage.setManaged(true);
 
-        showAlert(Alert.AlertType.INFORMATION, "Payment Successful",
-                String.format("Payment processed successfully!\n\n" +
-                                "Sale ID: %s\n" +
-                                "Total: $%.2f\n" +
-                                "Paid: $%.2f\n" +
-                                "Change: $%.2f\n" +
-                                "Payment Method: %s",
-                        SaleDataService.getInstance().getCurrentCustomer().getSaleId(),
-                        SaleDataService.getInstance().getTotal(),
-                        new BigDecimal(paidTextField.getText()),
-                        new BigDecimal(paidTextField.getText()).subtract(SaleDataService.getInstance().getTotal()),
-                        selectedPaymentMethod));
+        StringBuilder message = new StringBuilder();
+        message.append("Payment processed successfully!\n\n");
+        message.append(String.format("Sale ID: %s\n",
+                SaleDataService.getInstance().getCurrentCustomer().getSaleId()));
+        message.append(String.format("Original Total: $%.2f\n", originalTotal));
+
+        if (walletBalanceUsed.compareTo(BigDecimal.ZERO) > 0) {
+            message.append(String.format("Wallet Used: $%.2f\n", walletBalanceUsed));
+            message.append(String.format("Amount Paid: $%.2f\n", paidAmount));
+        } else {
+            message.append(String.format("Paid: $%.2f\n", paidAmount));
+        }
+
+        message.append(String.format("Change: $%.2f\n", paidAmount.subtract(amountToPay)));
+        message.append(String.format("Payment Method: %s", selectedPaymentMethod));
+
+        showAlert(Alert.AlertType.INFORMATION, "Payment Successful", message.toString());
 
         SaleDataService.getInstance().clearSaleData();
+        walletBalance = BigDecimal.ZERO;
+        walletBalanceUsed = BigDecimal.ZERO;
     }
 
     // Utility Methods
@@ -383,6 +504,107 @@ public class PaymentFormController implements Initializable {
     }
 
     public void addwalletOnClick(ActionEvent actionEvent) {
+        try {
+            System.out.println("Add Wallet button clicked");
 
+            SaleDataService dataService = SaleDataService.getInstance();
+            CustomerDTO customer = dataService.getCurrentCustomer();
+
+            if (customer == null) {
+                showAlert(Alert.AlertType.WARNING, "No Customer",
+                        "No customer information available.");
+                return;
+            }
+
+            if ("WALK-IN".equalsIgnoreCase(customer.getContact())) {
+                showAlert(Alert.AlertType.INFORMATION, "Not Available",
+                        "Wallet feature is not available for walk-in customers.");
+                return;
+            }
+
+            String paidText = paidTextField != null ? paidTextField.getText().trim() : "";
+            if (paidText.isEmpty()) {
+                showAlert(Alert.AlertType.WARNING, "No Payment Amount",
+                        "Please enter the payment amount first.");
+                return;
+            }
+
+            BigDecimal paidAmount;
+            try {
+                paidAmount = new BigDecimal(paidText);
+            } catch (NumberFormatException e) {
+                showAlert(Alert.AlertType.ERROR, "Invalid Amount",
+                        "Please enter a valid payment amount.");
+                return;
+            }
+
+            BigDecimal originalTotal = dataService.getTotal();
+            BigDecimal amountToPay = originalTotal.subtract(walletBalanceUsed);
+            BigDecimal changeAmount = paidAmount.subtract(amountToPay);
+
+            if (changeAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                showAlert(Alert.AlertType.INFORMATION, "No Change",
+                        "There is no change to add to the wallet.\nChange amount must be greater than zero.");
+                return;
+            }
+
+            // Add to wallet in background thread
+            new Thread(() -> {
+                try {
+                    WalletDTO updatedWallet = apiService.addToWallet(
+                            customer.getContact(), changeAmount);
+
+                    Platform.runLater(() -> {
+                        if (updatedWallet != null && updatedWallet.isSuccess()) {
+                            if (oldBalanceLabel != null) {
+                                oldBalanceLabel.setText(String.format("New Balance: $%.2f",
+                                        updatedWallet.getBalance()));
+                                oldBalanceLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #27ae60; -fx-font-weight: bold;");
+                            }
+
+                            if (addwallet != null) {
+                                addwallet.setText("Added ✓");
+                                addwallet.setStyle("-fx-background-color: #95a5a6; -fx-text-fill: white;");
+                                addwallet.setDisable(true);
+                            }
+
+                            String successMessage = String.format(
+                                    "Change Added to Wallet!\n\n" +
+                                            "Customer: %s\n" +
+                                            "Old Balance: $%.2f\n" +
+                                            "Change Added: $%.2f\n" +
+                                            "New Balance: $%.2f\n\n" +
+                                            "You can now give the customer $0.00 in cash.",
+                                    customer.getContact(),
+                                    walletBalance,
+                                    changeAmount,
+                                    updatedWallet.getBalance()
+                            );
+
+                            showAlert(Alert.AlertType.INFORMATION, "Wallet Updated", successMessage);
+                        } else {
+                            showAlert(Alert.AlertType.ERROR, "Error",
+                                    "Failed to add to wallet: " +
+                                            (updatedWallet != null ? updatedWallet.getMessage() : "Unknown error"));
+                        }
+                    });
+
+                } catch (Exception e) {
+                    Platform.runLater(() -> {
+                        System.err.println("Error adding to wallet: " + e.getMessage());
+                        e.printStackTrace();
+                        showAlert(Alert.AlertType.ERROR, "Error",
+                                "Failed to add to wallet: " + e.getMessage());
+                    });
+                }
+            }).start();
+
+        } catch (Exception e) {
+            System.err.println("Error in addwalletOnClick: " + e.getMessage());
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Error",
+                    "Failed to add to wallet: " + e.getMessage());
+        }
     }
+
 }
