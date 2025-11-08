@@ -1,7 +1,9 @@
 package com.qaldrin.posclient.controller;
 
+import com.jfoenix.controls.JFXButton;
 import com.qaldrin.posclient.dto.CustomerDTO;
 import com.qaldrin.posclient.service.SaleDataService;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -20,6 +22,10 @@ import java.util.ResourceBundle;
 
 public class DashboardFormController implements Initializable {
 
+    public Button lockBtn;
+    public Button pauseCustomer;
+    public Button quickSale;
+    public JFXButton paymentButton;
     @FXML private AnchorPane primaryScene;
     @FXML private AnchorPane navigationPane;
     @FXML private Label connectionStatusLabel;
@@ -226,5 +232,17 @@ public class DashboardFormController implements Initializable {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    public void lockOnClick(ActionEvent actionEvent) {
+
+    }
+
+    public void pauseCustomerOnClick(ActionEvent actionEvent) {
+
+    }
+
+    public void quickSaleOnClick(ActionEvent actionEvent) {
+
     }
 }

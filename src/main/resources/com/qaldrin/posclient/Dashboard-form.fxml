@@ -1,27 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <?import java.lang.*?>
 <?import java.util.*?>
 <?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.control.Label?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.Cursor?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.Pane?>
 <?import com.jfoenix.controls.JFXButton?>
 
-<AnchorPane fx:id="DashBoard" prefHeight="766.0" prefWidth="1366.0" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.qaldrin.posclient.controller.DashboardFormController">
-    <children>
-        <!-- Primary content area - Dashboard content will be loaded here -->
-        <AnchorPane fx:id="primaryScene" layoutX="5.0" layoutY="46.0" prefHeight="717.0" prefWidth="1050.0" style="-fx-background-color: #f0f0f0; -fx-border-color: #cccccc; -fx-border-width: 1px;" />
+<AnchorPane fx:id="DashBoard" prefHeight="766.0" prefWidth="1366.0"
+            xmlns="http://javafx.com/javafx/20.0.1"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.qaldrin.posclient.controller.DashboardFormController">
 
-        <!-- Navigation panel area with embedded navigation components -->
-        <AnchorPane fx:id="navigationPane" layoutX="1059.0" layoutY="46.0" prefHeight="717.0" prefWidth="301.0" style="-fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-width: 1px;">
+    <children>
+        <!-- Main content area -->
+        <AnchorPane fx:id="primaryScene" layoutX="5.0" layoutY="46.0"
+                    prefHeight="717.0" prefWidth="1050.0"
+                    style="-fx-background-color: #f0f0f0; -fx-border-color: #cccccc; -fx-border-width: 1px;" />
+
+        <!-- Navigation panel -->
+        <AnchorPane fx:id="navigationPane" layoutX="1059.0" layoutY="46.0"
+                    prefHeight="717.0" prefWidth="301.0"
+                    style="-fx-background-color: #ffffff; -fx-border-color: #cccccc; -fx-border-width: 1px;">
+
             <children>
-                <!-- First GridPane - Top buttons -->
-                <GridPane layoutX="3.0" layoutY="4.0" prefHeight="130.0" prefWidth="294.0" AnchorPane.leftAnchor="3.0" AnchorPane.topAnchor="4.0">
+                <!-- Top GridPane -->
+                <GridPane layoutX="3.0" layoutY="4.0" prefHeight="130.0" prefWidth="294.0">
                     <columnConstraints>
                         <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
                         <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
@@ -31,17 +38,32 @@
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                     </rowConstraints>
+
                     <children>
                         <Button fx:id="deleteButton" mnemonicParsing="false" onAction="#onDeleteButtonClick" prefHeight="75.0" prefWidth="148.0" text="Delete" />
-                        <Button fx:id="quantityButton" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#onQuantityButtonClick" prefHeight="75.0" prefWidth="148.0" text="Quantity" GridPane.columnIndex="1" />
-                        <Button layoutX="141.0" layoutY="10.0" mnemonicParsing="false" onAction="#onNewCustomerButtonClick" prefHeight="75.0" prefWidth="148.0" text="New Customer" GridPane.rowIndex="1" />
-                        <Button layoutX="10.0" layoutY="71.0" mnemonicParsing="false" prefHeight="75.0" prefWidth="148.0" text="Lock" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                        <Button fx:id="syncDatabaseButton" layoutX="141.0" layoutY="71.0" mnemonicParsing="false" onAction="#onSyncDatabaseClick" prefHeight="75.0" prefWidth="148.0" text="Sync Database" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                        <Button fx:id="quantityButton" mnemonicParsing="false" onAction="#onQuantityButtonClick" prefHeight="75.0" prefWidth="148.0" text="Quantity" GridPane.columnIndex="1" />
+                        <Button mnemonicParsing="false" onAction="#onNewCustomerButtonClick" prefHeight="75.0" prefWidth="148.0" text="New Customer" GridPane.rowIndex="1" />
+                        <Button fx:id="lockBtn" mnemonicParsing="false" onAction="#lockOnClick" prefHeight="75.0" prefWidth="148.0" text="Lock" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                        <Button fx:id="pauseCustomer" mnemonicParsing="false" onAction="#pauseCustomerOnClick" prefHeight="74.0" prefWidth="161.0" text="Pause Customer" GridPane.rowIndex="2" />
+                        <Button fx:id="syncDatabaseButton" mnemonicParsing="false" onAction="#onSyncDatabaseClick" prefHeight="75.0" prefWidth="148.0" text="Sync Database" GridPane.columnIndex="1" GridPane.rowIndex="2" />
                     </children>
                 </GridPane>
 
-                <!-- Second GridPane - Bottom navigation buttons -->
-                <GridPane layoutX="3.0" layoutY="495.0" prefHeight="130.0" prefWidth="294.0" AnchorPane.leftAnchor="3.0" AnchorPane.topAnchor="495.0">
+                <!-- Quick Sale Button -->
+                <Button fx:id="quickSale" layoutX="3.0" layoutY="134.0" mnemonicParsing="false"
+                        onAction="#quickSaleOnClick" prefHeight="43.0" prefWidth="294.0" text="Quick Sale" />
+
+                <!-- Payment Button -->
+                <JFXButton fx:id="paymentButton" buttonType="RAISED" layoutX="6.0" layoutY="434.0"
+                           onAction="#onPaymentButtonClick" prefHeight="50.0" prefWidth="294.0"
+                           ripplerFill="#01b210" text="Payment">
+                    <cursor>
+                        <Cursor fx:constant="HAND" />
+                    </cursor>
+                </JFXButton>
+
+                <!-- Bottom GridPane -->
+                <GridPane layoutX="3.0" layoutY="490.0" prefHeight="120.0" prefWidth="294.0">
                     <columnConstraints>
                         <ColumnConstraints hgrow="SOMETIMES" maxWidth="165.0" minWidth="10.0" prefWidth="146.0" />
                         <ColumnConstraints hgrow="SOMETIMES" maxWidth="165.0" minWidth="10.0" prefWidth="146.0" />
@@ -52,38 +74,29 @@
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
                     </rowConstraints>
+
                     <children>
+                        <Button mnemonicParsing="false" prefHeight="54.0" prefWidth="139.0" text="Cash Drawer" GridPane.rowIndex="1" />
                         <Button fx:id="dashboardButton" mnemonicParsing="false" onAction="#onDashboardButtonClick" prefHeight="90.0" prefWidth="174.0" text="Dashboard" GridPane.columnIndex="2" />
                         <Button fx:id="productButton" mnemonicParsing="false" onAction="#onProductClick" prefHeight="77.0" prefWidth="180.0" text="Product" GridPane.columnIndex="2" GridPane.rowIndex="1" />
-                        <Button layoutX="204.0" layoutY="10.0" mnemonicParsing="false" prefHeight="90.0" prefWidth="174.0" text="Discount %" />
-                        <Button fx:id="settingButton" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#onSettingButtonClick" prefHeight="90.0" prefWidth="174.0" text="Setting" GridPane.columnIndex="2" GridPane.rowIndex="2" />
-                        <Button layoutX="10.0" layoutY="10.0" mnemonicParsing="false" prefHeight="90.0" prefWidth="174.0" text="Refund" GridPane.columnIndex="1" />
-                        <Button layoutX="10.0" layoutY="10.0" mnemonicParsing="false" prefHeight="90.0" prefWidth="174.0" text="Comment" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                        <Button mnemonicParsing="false" prefHeight="90.0" prefWidth="174.0" text="Discount %" />
+                        <Button fx:id="settingButton" mnemonicParsing="false" onAction="#onSettingButtonClick" prefHeight="90.0" prefWidth="174.0" text="Setting" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+                        <Button mnemonicParsing="false" prefHeight="90.0" prefWidth="174.0" text="Refund" GridPane.columnIndex="1" />
+                        <Button mnemonicParsing="false" prefHeight="90.0" prefWidth="174.0" text="Comment" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                     </children>
                 </GridPane>
-
-                <!-- Payment Button -->
-                <JFXButton fx:id="paymentButton" buttonType="RAISED" layoutX="6.0" layoutY="434.0" onAction="#onPaymentButtonClick" prefHeight="50.0" prefWidth="294.0" ripplerFill="#01b210" text="Payment" AnchorPane.leftAnchor="6.0" AnchorPane.topAnchor="434.0">
-                    <cursor>
-                        <Cursor fx:constant="HAND" />
-                    </cursor>
-                </JFXButton>
-
-                <!-- Payment method buttons -->
-                <JFXButton layoutX="163.0" layoutY="240.0" prefHeight="53.0" prefWidth="109.0" text="Cash" AnchorPane.leftAnchor="163.0" AnchorPane.topAnchor="240.0" />
-                <JFXButton layoutX="163.0" layoutY="307.0" prefHeight="53.0" prefWidth="109.0" text="Card" AnchorPane.leftAnchor="163.0" AnchorPane.topAnchor="307.0" />
-                <JFXButton layoutX="163.0" layoutY="372.0" prefHeight="53.0" prefWidth="109.0" text="Check" AnchorPane.leftAnchor="163.0" AnchorPane.topAnchor="372.0" />
             </children>
         </AnchorPane>
 
-        <!-- Top header pane -->
-        <Pane layoutX="6.0" layoutY="6.0" prefHeight="37.0" prefWidth="1352.0" AnchorPane.leftAnchor="6.0" AnchorPane.topAnchor="6.0">
+        <!-- Header -->
+        <Pane layoutX="6.0" layoutY="6.0" prefHeight="37.0" prefWidth="1352.0">
             <children>
-                <!-- Connection Status (Notification image removed) -->
-                <Label fx:id="connectionStatusLabel" layoutX="14.0" layoutY="9.0" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #7f8c8d;" text="Status: Checking connection..." />
-
-                <!-- Notification label (kept for text display) -->
-                <Label fx:id="notificationlabel" layoutX="1221.0" layoutY="11.0" text="Notification : 0" style="-fx-font-size: 12px; -fx-font-weight: bold;" />
+                <Label fx:id="connectionStatusLabel" layoutX="14.0" layoutY="9.0"
+                       style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #7f8c8d;"
+                       text="Status: Checking connection..." />
+                <Label fx:id="notificationlabel" layoutX="1221.0" layoutY="11.0"
+                       text="Notification : 0"
+                       style="-fx-font-size: 12px; -fx-font-weight: bold;" />
             </children>
         </Pane>
     </children>

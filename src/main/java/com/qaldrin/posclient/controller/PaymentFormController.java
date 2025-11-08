@@ -9,6 +9,7 @@ import com.qaldrin.posclient.service.ApiService;
 import com.qaldrin.posclient.service.SaleDataService;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
@@ -25,6 +26,8 @@ import java.util.ResourceBundle;
 
 public class PaymentFormController implements Initializable {
 
+    public Label oldBalanceLabel;
+    public Button addwallet;
     @FXML private AnchorPane primaryScene;
     @FXML private VBox itemsVBox;
     @FXML private AnchorPane invoiceMessage;
@@ -377,5 +380,9 @@ public class PaymentFormController implements Initializable {
         alert.setHeaderText(null);
         alert.setContentText(message);
         return alert.showAndWait().filter(response -> response == ButtonType.OK).isPresent();
+    }
+
+    public void addwalletOnClick(ActionEvent actionEvent) {
+
     }
 }
