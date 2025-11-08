@@ -11,7 +11,7 @@ public class ApiConfig {
     // Keys for storing preferences
     private static final String PREF_IP_ADDRESS = "server_ip_address";
     private static final String PREF_PORT = "server_port";
-    private static final String DEFAULT_IP = "192.168.1.100";
+    private static final String DEFAULT_IP = "localhost";
     private static final String DEFAULT_PORT = "8080";
 
     // Base URL - will be loaded from preferences or use default
@@ -39,11 +39,17 @@ public class ApiConfig {
      * Load saved settings from preferences
      */
     private static void loadSavedSettings() {
-        Preferences prefs = Preferences.userNodeForPackage(ApiConfig.class);
-        String savedIp = prefs.get(PREF_IP_ADDRESS, DEFAULT_IP);
-        String savedPort = prefs.get(PREF_PORT, DEFAULT_PORT);
-        BASE_URL = "http://" + savedIp + ":" + savedPort;
-        System.out.println("ApiConfig loaded: " + BASE_URL);
+        try {
+            Preferences prefs = Preferences.userNodeForPackage(ApiConfig.class);
+            prefs.clear(); // <-- add this line just once to reset saved values
+
+            String savedIp = prefs.get(PREF_IP_ADDRESS, DEFAULT_IP);
+            String savedPort = prefs.get(PREF_PORT, DEFAULT_PORT);
+            BASE_URL = "http://" + savedIp + ":" + savedPort;
+            System.out.println("ApiConfig loaded: " + BASE_URL);
+        } catch (Exception e) {
+            System.err.println("Error loading preferences: " + e.getMessage());
+        }
     }
 
     /**

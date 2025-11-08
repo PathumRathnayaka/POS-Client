@@ -1,5 +1,6 @@
 package com.qaldrin.posclient.dto;
 
+import com.google.gson.annotations.SerializedName;
 import java.math.BigDecimal;
 
 /**
@@ -13,6 +14,9 @@ public class ProductWithQuantityDTO {
     private String category;
     private BigDecimal buyPrice;
     private BigDecimal salePrice;
+
+    // Map both "quantity" and "availableQuantity" from backend
+    @SerializedName(value = "availableQuantity", alternate = {"quantity"})
     private Integer availableQuantity;
 
     // Constructors
@@ -88,6 +92,7 @@ public class ProductWithQuantityDTO {
 
     @Override
     public String toString() {
-        return name + " (" + category + ") - $" + salePrice;
+        return name + " (" + category + ") - $" + salePrice + " [Stock: " +
+                (availableQuantity != null ? availableQuantity : 0) + "]";
     }
 }
