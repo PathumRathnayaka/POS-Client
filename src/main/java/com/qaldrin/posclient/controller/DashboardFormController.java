@@ -72,6 +72,23 @@ public class DashboardFormController implements Initializable {
     }
 
     /**
+     * ADD THIS NEW METHOD - Reload dashboard after payment completion
+     */
+    public void loadDashboardContentAfterPayment() {
+        System.out.println("Reloading dashboard after payment completion...");
+
+        // Clear any existing sale data
+        if (dashboardContentController != null) {
+            dashboardContentController.clearSale();
+        }
+
+        // Reload the dashboard content to start fresh
+        loadDashboardContent();
+
+        System.out.println("Dashboard reloaded - ready for new sale");
+    }
+
+    /**
      * Generic method to load FXML content into primaryScene
      */
     private void loadContent(String fxmlPath) {
@@ -195,6 +212,9 @@ public class DashboardFormController implements Initializable {
             // Get the controller and call loadSaleData()
             PaymentFormController paymentController = loader.getController();
             if (paymentController != null) {
+                // IMPORTANT: Pass this controller reference to payment controller
+                paymentController.setDashboardFormController(this);
+
                 paymentController.loadSaleData();
                 System.out.println("Called loadSaleData() on PaymentFormController");
             }

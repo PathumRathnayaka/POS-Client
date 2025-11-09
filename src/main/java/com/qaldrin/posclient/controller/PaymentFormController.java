@@ -17,6 +17,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.util.ArrayList;
@@ -61,12 +62,19 @@ public class PaymentFormController implements Initializable {
     private BigDecimal walletBalance = BigDecimal.ZERO;
     private BigDecimal walletBalanceUsed = BigDecimal.ZERO;
 
+    // Reference to parent controller - ADD THIS
+    private DashboardFormController dashboardFormController;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         System.out.println("PaymentFormController initializing...");
         initializeUI();
         setupPaidTextFieldListener();
-        // Note: loadSaleData() is called from DashboardFormController after loading view
+    }
+
+    // ADD THIS METHOD
+    public void setDashboardFormController(DashboardFormController controller) {
+        this.dashboardFormController = controller;
     }
 
     private void initializeUI() {
@@ -80,10 +88,6 @@ public class PaymentFormController implements Initializable {
         System.out.println("UI initialized");
     }
 
-    /**
-     * This method should be called from DashboardFormController after view is loaded
-     * OR we can call it automatically after initialize
-     */
     public void loadSaleData() {
         System.out.println("Loading sale data...");
 
@@ -99,7 +103,6 @@ public class PaymentFormController implements Initializable {
             return;
         }
 
-        // Display customer info
         if (saleIdLabel != null) {
             saleIdLabel.setText(customer.getSaleId());
             System.out.println("Set sale ID: " + customer.getSaleId());
@@ -109,10 +112,8 @@ public class PaymentFormController implements Initializable {
             System.out.println("Set customer contact: " + customer.getContact());
         }
 
-        // Display sale items
         displaySaleItems(saleItems);
 
-        // Calculate totals
         BigDecimal subtotal = dataService.getSubtotal();
         BigDecimal tax = dataService.getTax();
         BigDecimal total = dataService.getTotal();
@@ -135,18 +136,13 @@ public class PaymentFormController implements Initializable {
             changeLabel.setText("$0.00");
         }
 
-        // Load wallet balance for the customer
         System.out.println("About to load wallet for: " + customer.getContact());
         loadWalletBalance(customer.getContact());
     }
 
-    /**
-     * Load wallet balance and apply it to reduce payment amount
-     */
     private void loadWalletBalance(String customerContact) {
         System.out.println("loadWalletBalance called for: " + customerContact);
 
-        // Check if it's a walk-in customer
         if ("WALK-IN".equalsIgnoreCase(customerContact)) {
             System.out.println("Walk-in customer detected - hiding wallet UI");
             Platform.runLater(() -> {
@@ -164,7 +160,6 @@ public class PaymentFormController implements Initializable {
 
         System.out.println("Loading wallet balance from server for: " + customerContact);
 
-        // Load wallet in background thread
         new Thread(() -> {
             try {
                 System.out.println("Calling API getWalletBalance for: " + customerContact);
@@ -181,8 +176,6 @@ public class PaymentFormController implements Initializable {
                             oldBalanceLabel.setText(String.format("Wallet Balance: $%.2f", balance));
                             oldBalanceLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #27ae60; -fx-font-weight: bold;");
                             System.out.println("Set oldBalanceLabel text to: Wallet Balance: $" + balance);
-
-                            // Calculate and apply wallet usage
                             applyWalletBalance();
                         } else {
                             oldBalanceLabel.setText("Wallet Balance: $0.00");
@@ -227,9 +220,6 @@ public class PaymentFormController implements Initializable {
         }).start();
     }
 
-    /**
-     * Apply wallet balance to reduce payment amount
-     */
     private void applyWalletBalance() {
         System.out.println("applyWalletBalance called - Wallet balance: $" + walletBalance);
 
@@ -243,20 +233,16 @@ public class PaymentFormController implements Initializable {
 
         System.out.println("Original total: $" + total);
 
-        // Calculate how much wallet balance to use
         if (walletBalance.compareTo(total) >= 0) {
-            // Wallet covers entire amount
             walletBalanceUsed = total;
             total = BigDecimal.ZERO;
             System.out.println("Wallet covers entire amount - Used: $" + walletBalanceUsed);
         } else {
-            // Wallet covers partial amount
             walletBalanceUsed = walletBalance;
             total = total.subtract(walletBalance);
             System.out.println("Wallet covers partial amount - Used: $" + walletBalanceUsed + ", Remaining: $" + total);
         }
 
-        // Update payment total label
         BigDecimal finalTotal = total;
         Platform.runLater(() -> {
             if (paymentTotalLabel != null) {
@@ -326,6 +312,10 @@ public class PaymentFormController implements Initializable {
                 "Are you sure you want to cancel this payment?");
         if (confirm) {
             System.out.println("Payment cancelled by user");
+            // RELOAD DASHBOARD
+            if (dashboardFormController != null) {
+                dashboardFormController.loadDashboardContentAfterPayment();
+            }
         }
     }
 
@@ -395,7 +385,6 @@ public class PaymentFormController implements Initializable {
             SaleDataService dataService = SaleDataService.getInstance();
             BigDecimal originalTotal = dataService.getTotal();
 
-            // Calculate actual amount to pay after wallet deduction
             BigDecimal amountToPay = originalTotal.subtract(walletBalanceUsed);
 
             if (paidAmount.compareTo(amountToPay) < 0) {
@@ -405,7 +394,6 @@ public class PaymentFormController implements Initializable {
                 return;
             }
 
-            // Get customer from temp storage
             CustomerDTO tempCustomer = AddCustomerFormController.getTempCustomerDTO();
 
             if (tempCustomer == null) {
@@ -433,19 +421,11 @@ public class PaymentFormController implements Initializable {
         for (SaleItem item : saleItems) {
             SaleItemDTO dto = new SaleItemDTO();
             dto.setProductId(item.getId());
-            dto.setName(item.getName());
-            dto.setCategory(item.getCategory());
+            dto.setProductName(item.getName());
             dto.setBarcode(item.getBarcode());
             dto.setQuantity(item.getQuantity());
-            dto.setSalePrice(item.getSalePrice());
-            dto.setAmount(item.getAmount());
-
-            System.out.println("Creating SaleItemDTO: " +
-                    "name=" + dto.getName() +
-                    ", quantity=" + dto.getQuantity() +
-                    ", salePrice=" + dto.getSalePrice() +
-                    ", amount=" + dto.getAmount());
-
+            dto.setUnitPrice(item.getSalePrice());
+            dto.setTotalPrice(item.getAmount());
             saleItemDTOs.add(dto);
         }
 
@@ -461,6 +441,12 @@ public class PaymentFormController implements Initializable {
         paymentRequest.setPaidAmount(paidAmount);
         paymentRequest.setChangeAmount(paidAmount.subtract(amountToPay));
         paymentRequest.setPaymentMethod(selectedPaymentMethod);
+
+        // Show processing message
+        if (invoiceMessage != null) {
+            invoiceMessage.setVisible(true);
+            invoiceMessage.setManaged(true);
+        }
 
         new Thread(() -> {
             try {
@@ -481,37 +467,47 @@ public class PaymentFormController implements Initializable {
                             apiService.deductFromWallet(tempCustomer.getContact(), walletBalanceUsed);
                             System.out.println("Deducted $" + walletBalanceUsed + " from wallet");
                         } catch (Exception we) {
-                            System.err.println("Wallet deduction failed: " + we.getMessage());
+                            System.err.println("Failed to deduct from wallet: " + we.getMessage());
                         }
                     }
 
-                    // STEP 4: Update stock (in background, don't wait)
-                    try {
-                        updateStockAfterPayment(saleItems);
-                        System.out.println("Stock update initiated");
-                    } catch (Exception se) {
-                        System.err.println("Stock update failed: " + se.getMessage());
-                        // Continue anyway - payment is already complete
-                    }
-
-                    // STEP 5: Update UI on JavaFX thread
                     Platform.runLater(() -> {
                         paymentProcessed = true;
 
-                        // Show success message
+                        // STEP 4: Update stock
+                        System.out.println("Stock update initiated");
+                        updateStockAfterPayment(saleItems);
+
+                        // STEP 5: Show success
+                        System.out.println("Success dialog shown");
                         showPaymentSuccess(tempCustomer, originalTotal, amountToPay, paidAmount);
 
-                        // Clear temporary data
+                        // STEP 6: Clear temporary data
                         AddCustomerFormController.clearTempCustomerDTO();
                         SaleDataService.getInstance().clearSaleData();
                         walletBalance = BigDecimal.ZERO;
                         walletBalanceUsed = BigDecimal.ZERO;
 
-                        System.out.println("Payment completed - UI updated");
-                    });
+                        // STEP 7: Hide processing message
+                        if (invoiceMessage != null) {
+                            invoiceMessage.setVisible(false);
+                            invoiceMessage.setManaged(false);
+                        }
 
+                        System.out.println("Temporary customer data cleared");
+
+                        // STEP 8: Reload Dashboard - THIS IS THE KEY FIX
+                        System.out.println("Payment completed - UI updated");
+                        if (dashboardFormController != null) {
+                            dashboardFormController.loadDashboardContentAfterPayment();
+                        }
+                    });
                 } else {
                     Platform.runLater(() -> {
+                        if (invoiceMessage != null) {
+                            invoiceMessage.setVisible(false);
+                            invoiceMessage.setManaged(false);
+                        }
                         showAlert(Alert.AlertType.ERROR, "Payment Failed",
                                 "Failed to process payment. Please try again.");
                     });
@@ -519,6 +515,10 @@ public class PaymentFormController implements Initializable {
 
             } catch (Exception e) {
                 Platform.runLater(() -> {
+                    if (invoiceMessage != null) {
+                        invoiceMessage.setVisible(false);
+                        invoiceMessage.setManaged(false);
+                    }
                     System.err.println("Payment error: " + e.getMessage());
                     e.printStackTrace();
                     showAlert(Alert.AlertType.ERROR, "Payment Error",
@@ -548,13 +548,6 @@ public class PaymentFormController implements Initializable {
 
     private void showPaymentSuccess(CustomerDTO customer, BigDecimal originalTotal,
                                     BigDecimal amountToPay, BigDecimal paidAmount) {
-        // Show invoice message section
-        if (invoiceMessage != null) {
-            invoiceMessage.setVisible(true);
-            invoiceMessage.setManaged(true);
-        }
-
-        // Build success message
         StringBuilder message = new StringBuilder();
         message.append("Payment processed successfully!\n\n");
         message.append(String.format("Sale ID: %s\n", customer.getSaleId()));
@@ -573,8 +566,6 @@ public class PaymentFormController implements Initializable {
         message.append("Customer and sale data saved to server successfully!");
 
         showAlert(Alert.AlertType.INFORMATION, "Payment Successful", message.toString());
-
-        System.out.println("Success dialog shown");
     }
 
     @FXML
@@ -621,11 +612,12 @@ public class PaymentFormController implements Initializable {
                 return;
             }
 
-            // Add to wallet in background thread
             new Thread(() -> {
                 try {
                     WalletDTO updatedWallet = apiService.addToWallet(
                             tempCustomer.getContact(), changeAmount);
+
+                    System.out.println("Add to wallet response: " + updatedWallet);
 
                     Platform.runLater(() -> {
                         if (updatedWallet != null && updatedWallet.isSuccess()) {
@@ -742,33 +734,5 @@ public class PaymentFormController implements Initializable {
         alert.setHeaderText(null);
         alert.setContentText(message);
         return alert.showAndWait().filter(response -> response == ButtonType.OK).isPresent();
-    }
-    private void returnToDashboard() {
-        try {
-            System.out.println("Returning to dashboard...");
-
-            // Load dashboard form
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/qaldrin/posclient/Dashboard-form.fxml"));
-            AnchorPane dashboardPane = loader.load();
-
-            // Get the parent container and replace content
-            if (primaryScene != null && primaryScene.getParent() != null) {
-                AnchorPane parent = (AnchorPane) primaryScene.getParent();
-                parent.getChildren().clear();
-                parent.getChildren().add(dashboardPane);
-
-                // Anchor it properly
-                AnchorPane.setTopAnchor(dashboardPane, 0.0);
-                AnchorPane.setBottomAnchor(dashboardPane, 0.0);
-                AnchorPane.setLeftAnchor(dashboardPane, 0.0);
-                AnchorPane.setRightAnchor(dashboardPane, 0.0);
-
-                System.out.println("Dashboard loaded successfully");
-            }
-        } catch (Exception e) {
-            System.err.println("Error returning to dashboard: " + e.getMessage());
-            e.printStackTrace();
-        }
     }
 }
