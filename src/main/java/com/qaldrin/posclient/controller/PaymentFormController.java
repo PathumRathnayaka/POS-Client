@@ -173,10 +173,9 @@ public class PaymentFormController implements Initializable {
 
                     if (oldBalanceLabel != null) {
                         if (balance.compareTo(BigDecimal.ZERO) > 0) {
-                            oldBalanceLabel.setText(String.format("Wallet Balance: $%.2f", balance));
+                            oldBalanceLabel.setText(String.format("Wallet Balance: $%.2f (Applied)", balance));
                             oldBalanceLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #27ae60; -fx-font-weight: bold;");
-                            System.out.println("Set oldBalanceLabel text to: Wallet Balance: $" + balance);
-                            applyWalletBalance();
+                            System.out.println("Set oldBalanceLabel text to: Wallet Balance: $" + balance + " (Applied)");
                         } else {
                             oldBalanceLabel.setText("Wallet Balance: $0.00");
                             oldBalanceLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #7f8c8d;");
@@ -196,6 +195,9 @@ public class PaymentFormController implements Initializable {
                     } else {
                         System.err.println("ERROR: addwallet button is NULL!");
                     }
+
+                    // Apply wallet balance after loading
+                    applyWalletBalance();
                 });
 
                 System.out.println("Wallet balance loaded successfully: $" + balance);
@@ -229,35 +231,47 @@ public class PaymentFormController implements Initializable {
         }
 
         SaleDataService dataService = SaleDataService.getInstance();
-        BigDecimal total = dataService.getTotal();
+        BigDecimal originalTotal = dataService.getTotal();
 
-        System.out.println("Original total: $" + total);
+        System.out.println("Original total: $" + originalTotal);
 
-        if (walletBalance.compareTo(total) >= 0) {
-            walletBalanceUsed = total;
-            total = BigDecimal.ZERO;
+        // Calculate wallet balance to use
+        if (walletBalance.compareTo(originalTotal) >= 0) {
+            // Wallet covers entire amount
+            walletBalanceUsed = originalTotal;
             System.out.println("Wallet covers entire amount - Used: $" + walletBalanceUsed);
         } else {
+            // Wallet covers partial amount
             walletBalanceUsed = walletBalance;
-            total = total.subtract(walletBalance);
-            System.out.println("Wallet covers partial amount - Used: $" + walletBalanceUsed + ", Remaining: $" + total);
+            System.out.println("Wallet covers partial amount - Used: $" + walletBalanceUsed);
         }
 
-        BigDecimal finalTotal = total;
+        // Calculate new total after wallet deduction
+        BigDecimal newTotal = originalTotal.subtract(walletBalanceUsed);
+        if (newTotal.compareTo(BigDecimal.ZERO) < 0) {
+            newTotal = BigDecimal.ZERO;
+        }
+
+        BigDecimal finalTotal = newTotal;
         Platform.runLater(() -> {
             if (paymentTotalLabel != null) {
                 if (walletBalanceUsed.compareTo(BigDecimal.ZERO) > 0) {
-                    paymentTotalLabel.setText(String.format("Total: $%.2f (Wallet: -$%.2f)",
+                    paymentTotalLabel.setText(String.format("Total: $%.2f (After wallet: $%.2f off)",
                             finalTotal, walletBalanceUsed));
                     System.out.println("Updated paymentTotalLabel with wallet deduction");
                 } else {
                     paymentTotalLabel.setText(String.format("Total: $%.2f", finalTotal));
                 }
             }
+
+            // Update the change calculation with new total
+            if (paidTextField != null && !paidTextField.getText().trim().isEmpty()) {
+                calculateChange();
+            }
         });
 
         System.out.println("Wallet balance applied - Used: $" + walletBalanceUsed +
-                ", Remaining to pay: $" + total);
+                ", New total to pay: $" + finalTotal);
     }
 
     private void displaySaleItems(ObservableList<SaleItem> saleItems) {
@@ -552,16 +566,23 @@ public class PaymentFormController implements Initializable {
         message.append("Payment processed successfully!\n\n");
         message.append(String.format("Sale ID: %s\n", customer.getSaleId()));
         message.append(String.format("Customer: %s\n", customer.getContact()));
-        message.append(String.format("Original Total: $%.2f\n", originalTotal));
 
+        // Show wallet savings if used
         if (walletBalanceUsed.compareTo(BigDecimal.ZERO) > 0) {
+            message.append(String.format("Original Total: $%.2f\n", originalTotal));
             message.append(String.format("Wallet Used: $%.2f\n", walletBalanceUsed));
-            message.append(String.format("Amount Paid: $%.2f\n", paidAmount));
+            message.append(String.format("Amount to Pay: $%.2f\n", amountToPay));
         } else {
-            message.append(String.format("Paid: $%.2f\n", paidAmount));
+            message.append(String.format("Total: $%.2f\n", originalTotal));
         }
 
-        message.append(String.format("Change: $%.2f\n", paidAmount.subtract(amountToPay)));
+        message.append(String.format("Paid: $%.2f\n", paidAmount));
+
+        BigDecimal change = paidAmount.subtract(amountToPay);
+        if (change.compareTo(BigDecimal.ZERO) < 0) {
+            change = BigDecimal.ZERO;
+        }
+        message.append(String.format("Change: $%.2f\n", change));
         message.append(String.format("Payment Method: %s\n\n", selectedPaymentMethod));
         message.append("Customer and sale data saved to server successfully!");
 
@@ -604,6 +625,10 @@ public class PaymentFormController implements Initializable {
 
             BigDecimal originalTotal = SaleDataService.getInstance().getTotal();
             BigDecimal amountToPay = originalTotal.subtract(walletBalanceUsed);
+            if (amountToPay.compareTo(BigDecimal.ZERO) < 0) {
+                amountToPay = BigDecimal.ZERO;
+            }
+
             BigDecimal changeAmount = paidAmount.subtract(amountToPay);
 
             if (changeAmount.compareTo(BigDecimal.ZERO) <= 0) {
@@ -612,12 +637,14 @@ public class PaymentFormController implements Initializable {
                 return;
             }
 
+            // Store old balance before adding
+            BigDecimal oldBalance = walletBalance;
+
+            // Add to wallet in background thread
             new Thread(() -> {
                 try {
                     WalletDTO updatedWallet = apiService.addToWallet(
                             tempCustomer.getContact(), changeAmount);
-
-                    System.out.println("Add to wallet response: " + updatedWallet);
 
                     Platform.runLater(() -> {
                         if (updatedWallet != null && updatedWallet.isSuccess()) {
@@ -641,7 +668,7 @@ public class PaymentFormController implements Initializable {
                                             "New Balance: $%.2f\n\n" +
                                             "You can now give the customer $0.00 in cash.",
                                     tempCustomer.getContact(),
-                                    walletBalance,
+                                    oldBalance,
                                     changeAmount,
                                     updatedWallet.getBalance()
                             );
@@ -705,18 +732,25 @@ public class PaymentFormController implements Initializable {
 
             BigDecimal paid = new BigDecimal(paidText);
             BigDecimal originalTotal = SaleDataService.getInstance().getTotal();
+
+            // Calculate actual amount to pay after wallet deduction
             BigDecimal amountToPay = originalTotal.subtract(walletBalanceUsed);
+            if (amountToPay.compareTo(BigDecimal.ZERO) < 0) {
+                amountToPay = BigDecimal.ZERO;
+            }
+
             BigDecimal change = paid.subtract(amountToPay);
 
             if (change.compareTo(BigDecimal.ZERO) < 0) {
-                changeLabel.setText("$0.00");
-                changeLabel.setStyle("-fx-text-fill: red;");
+                changeLabel.setText("Change: $0.00");
+                changeLabel.setStyle("-fx-text-fill: red; -fx-font-size: 16px;");
             } else {
-                changeLabel.setText(String.format("$%.2f", change));
-                changeLabel.setStyle("-fx-text-fill: green;");
+                changeLabel.setText(String.format("Change: $%.2f", change));
+                changeLabel.setStyle("-fx-text-fill: green; -fx-font-size: 16px; -fx-font-weight: bold;");
             }
         } catch (NumberFormatException e) {
-            changeLabel.setText("$0.00");
+            changeLabel.setText("Change: $0.00");
+            changeLabel.setStyle("-fx-font-size: 16px;");
         }
     }
 
