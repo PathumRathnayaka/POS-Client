@@ -225,11 +225,16 @@ public class ApiService {
         private Long productId;
         private Integer quantity;
 
+        // Add default constructor
+        public StockUpdateItem() {
+        }
+
         public StockUpdateItem(Long productId, Integer quantity) {
             this.productId = productId;
             this.quantity = quantity;
         }
 
+        // Add proper getters and setters
         public Long getProductId() {
             return productId;
         }
@@ -244,6 +249,11 @@ public class ApiService {
 
         public void setQuantity(Integer quantity) {
             this.quantity = quantity;
+        }
+
+        @Override
+        public String toString() {
+            return "StockUpdateItem{productId=" + productId + ", quantity=" + quantity + '}';
         }
     }
     public WalletDTO getWalletByContact(String contact) throws IOException {
@@ -425,4 +435,6 @@ public class ApiService {
             this.amount = amount;
         }
     }
+
+
 }
