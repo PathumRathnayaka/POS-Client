@@ -235,43 +235,43 @@ public class PaymentFormController implements Initializable {
 
         System.out.println("Original total: $" + originalTotal);
 
-        // Calculate wallet balance to use
+        // Use wallet balance to reduce total
         if (walletBalance.compareTo(originalTotal) >= 0) {
-            // Wallet covers entire amount
+            // Wallet covers entire total
             walletBalanceUsed = originalTotal;
-            System.out.println("Wallet covers entire amount - Used: $" + walletBalanceUsed);
         } else {
-            // Wallet covers partial amount
+            // Wallet covers partial total
             walletBalanceUsed = walletBalance;
-            System.out.println("Wallet covers partial amount - Used: $" + walletBalanceUsed);
         }
 
-        // Calculate new total after wallet deduction
-        BigDecimal newTotal = originalTotal.subtract(walletBalanceUsed);
-        if (newTotal.compareTo(BigDecimal.ZERO) < 0) {
-            newTotal = BigDecimal.ZERO;
+        // New total after wallet deduction
+        BigDecimal reducedTotal = originalTotal.subtract(walletBalanceUsed);
+        if (reducedTotal.compareTo(BigDecimal.ZERO) < 0) {
+            reducedTotal = BigDecimal.ZERO;
         }
 
-        BigDecimal finalTotal = newTotal;
+        // Update UI
+        BigDecimal finalReducedTotal = reducedTotal;
         Platform.runLater(() -> {
-            if (paymentTotalLabel != null) {
-                if (walletBalanceUsed.compareTo(BigDecimal.ZERO) > 0) {
-                    paymentTotalLabel.setText(String.format("Total: $%.2f (After wallet: $%.2f off)",
-                            finalTotal, walletBalanceUsed));
-                    System.out.println("Updated paymentTotalLabel with wallet deduction");
-                } else {
-                    paymentTotalLabel.setText(String.format("Total: $%.2f", finalTotal));
-                }
+            if (oldBalanceLabel != null) {
+                oldBalanceLabel.setText(String.format("Wallet Balance: Rs. %.2f (Applied)",
+                        walletBalance.doubleValue()));
+                oldBalanceLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #27ae60; -fx-font-weight: bold;");
             }
 
-            // Update the change calculation with new total
+            if (paymentTotalLabel != null) {
+                // ✅ Show only reduced total (like your POS payment form)
+                paymentTotalLabel.setText(String.format("Total: Rs. %.2f", finalReducedTotal.doubleValue()));
+            }
+
+            // Update change if already entered
             if (paidTextField != null && !paidTextField.getText().trim().isEmpty()) {
                 calculateChange();
             }
         });
 
-        System.out.println("Wallet balance applied - Used: $" + walletBalanceUsed +
-                ", New total to pay: $" + finalTotal);
+        System.out.println("Wallet applied: used Rs. " + walletBalanceUsed +
+                ", reduced total Rs. " + finalReducedTotal);
     }
 
     private void displaySaleItems(ObservableList<SaleItem> saleItems) {
