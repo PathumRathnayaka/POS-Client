@@ -187,8 +187,8 @@ public class ApiService {
             String responseBody = response.body().string();
             System.out.println("Payment response: " + responseBody);
 
-            com.qaldrin.posclient.dto.PaymentResponseDTO paymentResponse =
-                gson.fromJson(responseBody, com.qaldrin.posclient.dto.PaymentResponseDTO.class);
+            PaymentResponseDTO paymentResponse =
+                gson.fromJson(responseBody, PaymentResponseDTO.class);
 
             return paymentResponse != null && paymentResponse.isSuccess();
         }
