@@ -27,7 +27,8 @@ import java.util.ResourceBundle;
 public class PaymentFormController implements Initializable {
 
     public Label oldBalanceLabel;
-    public Button addwallet;
+
+    @FXML private Button addwalletBtn;
 
     @FXML private AnchorPane primaryScene;
     @FXML private VBox itemsVBox;
@@ -150,9 +151,9 @@ public class PaymentFormController implements Initializable {
                     oldBalanceLabel.setVisible(false);
                     oldBalanceLabel.setManaged(false);
                 }
-                if (addwallet != null) {
-                    addwallet.setVisible(false);
-                    addwallet.setManaged(false);
+                if (addwalletBtn != null) {
+                    addwalletBtn.setVisible(true);
+                    addwalletBtn.setManaged(true);
                 }
             });
             return;
@@ -188,12 +189,12 @@ public class PaymentFormController implements Initializable {
                         System.err.println("ERROR: oldBalanceLabel is NULL!");
                     }
 
-                    if (addwallet != null) {
-                        addwallet.setVisible(true);
-                        addwallet.setManaged(true);
-                        System.out.println("addwallet button made visible");
+                    if (addwalletBtn != null) {
+                        addwalletBtn.setVisible(true);
+                        addwalletBtn.setManaged(true);
+                        System.out.println("addwalletBtn button made visible");
                     } else {
-                        System.err.println("ERROR: addwallet button is NULL!");
+                        System.err.println("ERROR: addwalletBtn is NULL!");
                     }
 
                     // Apply wallet balance after loading
@@ -213,9 +214,9 @@ public class PaymentFormController implements Initializable {
                         oldBalanceLabel.setVisible(true);
                         oldBalanceLabel.setManaged(true);
                     }
-                    if (addwallet != null) {
-                        addwallet.setVisible(true);
-                        addwallet.setManaged(true);
+                    if (addwalletBtn != null) {
+                        addwalletBtn.setVisible(true);
+                        addwalletBtn.setManaged(true);
                     }
                 });
             }
@@ -654,10 +655,10 @@ public class PaymentFormController implements Initializable {
                                 oldBalanceLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #27ae60; -fx-font-weight: bold;");
                             }
 
-                            if (addwallet != null) {
-                                addwallet.setText("Added ✓");
-                                addwallet.setStyle("-fx-background-color: #95a5a6; -fx-text-fill: white;");
-                                addwallet.setDisable(true);
+                            if (addwalletBtn != null) {
+                                addwalletBtn.setText("Added ✓");
+                                addwalletBtn.setStyle("-fx-background-color: #95a5a6; -fx-text-fill: white;");
+                                addwalletBtn.setDisable(true);
                             }
 
                             String successMessage = String.format(
@@ -768,5 +769,17 @@ public class PaymentFormController implements Initializable {
         alert.setHeaderText(null);
         alert.setContentText(message);
         return alert.showAndWait().filter(response -> response == ButtonType.OK).isPresent();
+    }
+
+    public void onCashSelected(ActionEvent actionEvent) {
+
+    }
+
+    public void onCardSelected(ActionEvent actionEvent) {
+
+    }
+
+    public void onWalletSelected(ActionEvent actionEvent) {
+
     }
 }

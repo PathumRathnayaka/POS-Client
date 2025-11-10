@@ -143,6 +143,7 @@
                 <JFXButton fx:id="doneButton" buttonType="RAISED" layoutX="448.0" layoutY="572.0" onAction="#onDone" prefHeight="34.0" prefWidth="195.0" style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5; -fx-font-size: 18px;" text="Complete Payment">
                     <cursor><Cursor fx:constant="HAND" /></cursor>
                 </JFXButton>
+            <Button fx:id="addwalletBtn" layoutX="520.0" layoutY="340.0" mnemonicParsing="false" onAction="#addwalletOnClick" text="Add to Wallet" />
             </children>
         </AnchorPane>
 
