@@ -295,7 +295,69 @@ public class DashboardFormController implements Initializable {
 
     }
 
+    @FXML
     public void quickSaleOnClick(ActionEvent actionEvent) {
+        System.out.println("Quick Sale clicked");
 
+        if (dashboardContentController == null) {
+            showAlert(Alert.AlertType.ERROR, "Error", "Dashboard not loaded properly!");
+            return;
+        }
+
+        // 1️⃣ Ensure items exist
+        if (dashboardContentController.getSaleItems().isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "No Items", "Please add items before processing Quick Sale!");
+            return;
+        }
+
+        // 2️⃣ Create a temporary Walk-in customer
+        CustomerDTO walkInCustomer = new CustomerDTO();
+        walkInCustomer.setSaleId("WALKIN-" + System.currentTimeMillis());
+        walkInCustomer.setContact("WALK-IN");
+        walkInCustomer.setEmail("");
+
+        // 3️⃣ Store walk-in sale data
+        SaleDataService.getInstance().setSaleData(
+                dashboardContentController.getSaleItems(),
+                dashboardContentController.getSubtotal(),
+                dashboardContentController.getTax(),
+                dashboardContentController.getTotal()
+        );
+        SaleDataService.getInstance().setCustomer(walkInCustomer);
+        AddCustomerFormController.setTempCustomerDTO(walkInCustomer);
+
+        // 4️⃣ Load payment form
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/qaldrin/posclient/Payment-form.fxml"));
+            AnchorPane content = loader.load();
+
+            PaymentFormController paymentController = loader.getController();
+            if (paymentController != null) {
+                paymentController.setDashboardFormController(this);
+
+                // Load the sale data
+                paymentController.loadSaleData();
+
+                // Disable wallet features for quick sale
+                paymentController.disableWalletForWalkIn();
+
+                System.out.println("Quick Sale PaymentForm initialized for Walk-in.");
+            }
+
+            // Replace dashboard with payment form
+            primaryScene.getChildren().clear();
+            primaryScene.getChildren().add(content);
+            AnchorPane.setTopAnchor(content, 0.0);
+            AnchorPane.setBottomAnchor(content, 0.0);
+            AnchorPane.setLeftAnchor(content, 0.0);
+            AnchorPane.setRightAnchor(content, 0.0);
+
+            System.out.println("Quick Sale Payment Form loaded successfully.");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to load Quick Sale payment form: " + e.getMessage());
+        }
     }
+
 }

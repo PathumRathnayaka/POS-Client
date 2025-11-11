@@ -69,6 +69,7 @@ public class PaymentFormController implements Initializable {
     private BigDecimal pendingWalletAddition = BigDecimal.ZERO;
     private boolean walletAdditionPending = false;
 
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         System.out.println("PaymentFormController initializing...");
@@ -107,13 +108,15 @@ public class PaymentFormController implements Initializable {
             return;
         }
 
-        if (saleIdLabel != null) {
-            saleIdLabel.setText(customer.getSaleId());
-            System.out.println("Set sale ID: " + customer.getSaleId());
-        }
-        if (customerContactLabel != null) {
-            customerContactLabel.setText(customer.getContact());
-            System.out.println("Set customer contact: " + customer.getContact());
+        if ("WALK-IN".equalsIgnoreCase(customer.getContact())) {
+            if (saleIdLabel != null) {
+                saleIdLabel.setText(customer.getSaleId() + " (Quick Sale)");
+                saleIdLabel.setStyle("-fx-text-fill: #3498db; -fx-font-weight: bold;");
+            }
+            if (customerContactLabel != null) {
+                customerContactLabel.setText("Customer: Walk-in");
+                customerContactLabel.setStyle("-fx-text-fill: #7f8c8d; -fx-font-style: italic;");
+            }
         }
 
         displaySaleItems(saleItems);
@@ -142,6 +145,18 @@ public class PaymentFormController implements Initializable {
 
         System.out.println("About to load wallet for: " + customer.getContact());
         loadWalletBalance(customer.getContact());
+    }
+
+    public void disableWalletForWalkIn() {
+        if (addwalletBtn != null) {
+            addwalletBtn.setVisible(false);
+            addwalletBtn.setManaged(false);
+        }
+        if (oldBalanceLabel != null) {
+            oldBalanceLabel.setVisible(false);
+            oldBalanceLabel.setManaged(false);
+        }
+        System.out.println("Wallet UI disabled for Walk-in (Quick Sale).");
     }
 
     private void loadWalletBalance(String customerContact) {
@@ -555,6 +570,7 @@ public class PaymentFormController implements Initializable {
             showAlert(Alert.AlertType.ERROR, "Invalid Amount", "Please enter a valid number");
         }
     }
+
 
     private List<SaleItemDTO> toSaleItemDTOList() {
         List<SaleItemDTO> saleItemDTOs = new ArrayList<>();
