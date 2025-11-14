@@ -310,11 +310,11 @@ public class DashboardFormController implements Initializable {
             return;
         }
 
-        // 2️⃣ Create a temporary Walk-in customer
+        // 2️⃣ Create a temporary Walk-in customer WITHOUT sale ID (let backend generate it)
         CustomerDTO walkInCustomer = new CustomerDTO();
-        walkInCustomer.setSaleId("WALKIN-" + System.currentTimeMillis());
         walkInCustomer.setContact("WALK-IN");
         walkInCustomer.setEmail("");
+        // Don't set saleId here - let the backend generate it
 
         // 3️⃣ Store walk-in sale data
         SaleDataService.getInstance().setSaleData(

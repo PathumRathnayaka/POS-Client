@@ -431,7 +431,7 @@ public class PaymentFormController implements Initializable {
                 return;
             }
 
-            System.out.println("Processing payment for customer: " + tempCustomer.getSaleId());
+            System.out.println("Processing payment for customer: " + tempCustomer.getContact());
 
             // Show processing message
             if (invoiceMessage != null) {
@@ -441,13 +441,18 @@ public class PaymentFormController implements Initializable {
 
             new Thread(() -> {
                 try {
-                    // STEP 1: Save customer
+                    // STEP 1: Save customer - backend generates sale ID
                     CustomerDTO savedCustomer = apiService.saveCustomer(tempCustomer);
-                    System.out.println("Customer saved: " + savedCustomer.getSaleId());
+                    System.out.println("Customer saved with sale ID: " + savedCustomer.getSaleId());
 
-                    // STEP 2: Process payment
+                    // CRITICAL: Update temp customer with backend-generated sale ID
+                    tempCustomer.setSaleId(savedCustomer.getSaleId());
+                    tempCustomer.setId(savedCustomer.getId());
+                    AddCustomerFormController.setTempCustomerDTO(tempCustomer);
+
+                    // STEP 2: Process payment with the correct sale ID
                     PaymentRequestDTO paymentRequest = new PaymentRequestDTO();
-                    paymentRequest.setSaleId(savedCustomer.getSaleId());
+                    paymentRequest.setSaleId(savedCustomer.getSaleId()); // Use backend sale ID
                     paymentRequest.setCustomerContact(savedCustomer.getContact());
                     paymentRequest.setCustomerEmail(savedCustomer.getEmail());
                     paymentRequest.setSaleItems(toSaleItemDTOList());
@@ -478,7 +483,6 @@ public class PaymentFormController implements Initializable {
                         // STEP 4: Apply pending wallet addition (if staged)
                         if (walletAdditionPending && pendingWalletAddition.compareTo(BigDecimal.ZERO) > 0) {
                             try {
-                                // Reset wallet with new balance (as per your design)
                                 apiService.addToWallet(savedCustomer.getContact(), pendingWalletAddition);
                                 System.out.println("Wallet updated to Rs. " + pendingWalletAddition);
                             } catch (Exception e) {
@@ -507,7 +511,6 @@ public class PaymentFormController implements Initializable {
                             BigDecimal change = paidAmount.subtract(amountToPay);
                             if (change.compareTo(BigDecimal.ZERO) < 0) change = BigDecimal.ZERO;
 
-                            // Wallet addition summary
                             if (walletAdditionPending && pendingWalletAddition.compareTo(BigDecimal.ZERO) > 0) {
                                 message.append(String.format("Change Added to Wallet: Rs. %.2f\n", pendingWalletAddition));
                             } else {
@@ -570,7 +573,6 @@ public class PaymentFormController implements Initializable {
             showAlert(Alert.AlertType.ERROR, "Invalid Amount", "Please enter a valid number");
         }
     }
-
 
     private List<SaleItemDTO> toSaleItemDTOList() {
         List<SaleItemDTO> saleItemDTOs = new ArrayList<>();
