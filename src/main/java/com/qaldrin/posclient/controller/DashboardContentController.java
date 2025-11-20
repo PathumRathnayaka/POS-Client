@@ -53,6 +53,13 @@ public class DashboardContentController implements Initializable {
         colQuantity.setCellValueFactory(cellData -> cellData.getValue().quantityProperty().asObject());
         colAmount.setCellValueFactory(cellData -> cellData.getValue().amountProperty());
 
+        colId.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: white;");
+        colName.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: white;");
+        colCategory.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: white;");
+        colSalePrice.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: white;");
+        colQuantity.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: white;");
+        colAmount.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: white;");
+
         colQuantity.setCellFactory(column -> new TableCell<SaleItem, Integer>() {
             @Override
             protected void updateItem(Integer item, boolean empty) {
@@ -114,15 +121,32 @@ public class DashboardContentController implements Initializable {
             @Override
             protected void updateItem(ProductWithQuantityDTO product, boolean empty) {
                 super.updateItem(product, empty);
+
                 if (empty || product == null) {
                     setText(null);
-                } else {
-                    setText(String.format("%s - %s ($%.2f) [Stock: %d]",
-                            product.getName(),
-                            product.getCategory(),
-                            product.getSalePrice(),
-                            product.getAvailableQuantity()));
+                    setGraphic(null);
+                    return;
                 }
+
+                // Text
+                setText(String.format(
+                        "%s  | %s  | $%.2f  | Stock: %d",
+                        product.getName(),
+                        product.getCategory(),
+                        product.getSalePrice(),
+                        product.getAvailableQuantity()
+                ));
+
+                // Fix invisible items issue (important)
+                setPrefHeight(40);
+
+                // Dark theme
+                setStyle(
+                        "-fx-text-fill: #ecf0f1;" +
+                                "-fx-font-size: 14px;" +
+                                "-fx-padding: 8;" +
+                                "-fx-background-color: #1f2a35;"
+                );
             }
         });
 
@@ -242,6 +266,9 @@ public class DashboardContentController implements Initializable {
     private void showSearchDropdown(boolean show) {
         searchDropdown.setVisible(show);
         searchDropdown.setManaged(show);
+        if (show) {
+            searchDropdown.toFront();
+        }
     }
 
     private void showAlert(String title, String message) {
