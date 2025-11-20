@@ -72,6 +72,7 @@ public class PaymentFormController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        primaryScene.toFront();
         System.out.println("PaymentFormController initializing...");
         initializeUI();
         setupPaidTextFieldListener();
@@ -294,6 +295,8 @@ public class PaymentFormController implements Initializable {
     }
 
     private void displaySaleItems(ObservableList<SaleItem> saleItems) {
+
+
         if (itemsVBox == null) {
             System.err.println("itemsVBox is null!");
             return;
@@ -304,21 +307,23 @@ public class PaymentFormController implements Initializable {
         for (SaleItem item : saleItems) {
             HBox itemRow = new HBox(10);
             itemRow.setPadding(new Insets(5));
-            itemRow.setStyle("-fx-background-color: #f5f5f5; -fx-background-radius: 5;");
+            itemRow.setStyle("-fx-background-color: #2c3e50; -fx-background-radius: 8;");
 
             Label nameLabel = new Label(item.getName());
             nameLabel.setPrefWidth(200);
-            nameLabel.setStyle("-fx-font-weight: bold;");
+            nameLabel.setStyle("-fx-text-fill: white; -fx-font-weight: bold;");
 
             Label qtyLabel = new Label("Qty: " + item.getQuantity());
             qtyLabel.setPrefWidth(80);
+            qtyLabel.setStyle("-fx-text-fill: #ecf0f1;");
 
             Label priceLabel = new Label(String.format("$%.2f", item.getSalePrice()));
             priceLabel.setPrefWidth(80);
+            priceLabel.setStyle("-fx-text-fill: #ecf0f1;");
 
             Label amountLabel = new Label(String.format("$%.2f", item.getAmount()));
             amountLabel.setPrefWidth(80);
-            amountLabel.setStyle("-fx-font-weight: bold;");
+            amountLabel.setStyle("-fx-text-fill: #25D366; -fx-font-weight: bold;");
 
             itemRow.getChildren().addAll(nameLabel, qtyLabel, priceLabel, amountLabel);
             itemsVBox.getChildren().add(itemRow);
@@ -847,7 +852,8 @@ public class PaymentFormController implements Initializable {
         if (cardButton != null) cardButton.setStyle("");
         if (checkButton != null) checkButton.setStyle("");
 
-        String selectedStyle = "-fx-background-color: #4CAF50; -fx-text-fill: white;";
+        String selectedStyle = "-fx-background-color: #25D366; -fx-text-fill: white; -fx-font-weight: bold;";
+        String normalStyle = "-fx-background-color: #34495e; -fx-text-fill: white;";
         if ("Cash".equals(method) && cashButton != null) {
             cashButton.setStyle(selectedStyle);
         } else if ("Card".equals(method) && cardButton != null) {
