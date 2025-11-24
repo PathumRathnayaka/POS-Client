@@ -18,6 +18,8 @@ import javafx.stage.StageStyle;
 
 import java.io.IOException;
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
 public class DashboardFormController implements Initializable {
@@ -153,11 +155,11 @@ public class DashboardFormController implements Initializable {
         // After popup closes, check if customer was saved temporarily
         CustomerDTO tempCustomer = AddCustomerFormController.getTempCustomerDTO();
         if (tempCustomer != null) {
-            System.out.println("Customer saved temporarily - Sale ID: " + tempCustomer.getSaleId());
+            System.out.println("Customer saved temporarily - Sale ID: ");
             SaleDataService.getInstance().setCustomer(tempCustomer);
             showAlert(Alert.AlertType.INFORMATION, "Customer Info Saved",
                     "Customer information saved temporarily!\n\n" +
-                            "Sale ID: " + tempCustomer.getSaleId() +
+                            "Sale ID: " +
                             "\nContact: " + tempCustomer.getContact() +
                             "\n\nCustomer will be saved to server when you complete payment.");
         }
@@ -202,7 +204,7 @@ public class DashboardFormController implements Initializable {
         // Also ensure customer is stored
         SaleDataService.getInstance().setCustomer(tempCustomer);
 
-        System.out.println("Proceeding to payment with customer: " + tempCustomer.getSaleId());
+        System.out.println("Proceeding to payment with customer: ");
 
         // Load payment form and call loadSaleData()
         try {
@@ -310,13 +312,24 @@ public class DashboardFormController implements Initializable {
             return;
         }
 
-        // 2️⃣ Create a temporary Walk-in customer WITHOUT sale ID (let backend generate it)
+        // 2️⃣ Generate a unique sale ID for walk-in customer
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        String timestamp = LocalDateTime.now().format(formatter);
+        String quickSaleId = "SALE-" + timestamp;
+
+        System.out.println("Generated Quick Sale ID: " + quickSaleId);
+
+        // 3️⃣ Create a temporary Walk-in customer
         CustomerDTO walkInCustomer = new CustomerDTO();
         walkInCustomer.setContact("WALK-IN");
         walkInCustomer.setEmail("");
-        // Don't set saleId here - let the backend generate it
 
-        // 3️⃣ Store walk-in sale data
+        // 4️⃣ ✅ CRITICAL: Store BOTH customer AND sale ID in temp storage
+        AddCustomerFormController.setTempCustomerDTO(walkInCustomer, quickSaleId);
+
+        System.out.println("Walk-in customer stored with Sale ID: " + quickSaleId);
+
+        // 5️⃣ Store walk-in sale data in SaleDataService
         SaleDataService.getInstance().setSaleData(
                 dashboardContentController.getSaleItems(),
                 dashboardContentController.getSubtotal(),
@@ -324,9 +337,8 @@ public class DashboardFormController implements Initializable {
                 dashboardContentController.getTotal()
         );
         SaleDataService.getInstance().setCustomer(walkInCustomer);
-        AddCustomerFormController.setTempCustomerDTO(walkInCustomer);
 
-        // 4️⃣ Load payment form
+        // 6️⃣ Load payment form
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/qaldrin/posclient/Payment-form.fxml"));
             AnchorPane content = loader.load();

@@ -1,19 +1,26 @@
 package com.qaldrin.posclient.dto;
 
 /**
- * Customer DTO - matches backend Customer entity
+ * DTO for Customer data transfer between client and server
+ * ✅ Removed saleId - Customer is identified by contact only
  */
 public class CustomerDTO {
+
     private Long id;
-    private String saleId;
     private String contact;
     private String email;
 
     // Constructors
-    public CustomerDTO() {}
+    public CustomerDTO() {
+    }
 
-    public CustomerDTO(String saleId, String contact, String email) {
-        this.saleId = saleId;
+    public CustomerDTO(String contact, String email) {
+        this.contact = contact;
+        this.email = email;
+    }
+
+    public CustomerDTO(Long id, String contact, String email) {
+        this.id = id;
         this.contact = contact;
         this.email = email;
     }
@@ -25,14 +32,6 @@ public class CustomerDTO {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getSaleId() {
-        return saleId;
-    }
-
-    public void setSaleId(String saleId) {
-        this.saleId = saleId;
     }
 
     public String getContact() {
@@ -55,7 +54,6 @@ public class CustomerDTO {
     public String toString() {
         return "CustomerDTO{" +
                 "id=" + id +
-                ", saleId='" + saleId + '\'' +
                 ", contact='" + contact + '\'' +
                 ", email='" + email + '\'' +
                 '}';

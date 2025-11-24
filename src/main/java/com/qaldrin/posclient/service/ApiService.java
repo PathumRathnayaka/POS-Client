@@ -115,8 +115,22 @@ public class ApiService {
             }
 
             String responseBody = response.body().string();
-            System.out.println("Customer saved successfully: " + responseBody);
-            return gson.fromJson(responseBody, CustomerDTO.class);
+            System.out.println("Customer response: " + responseBody);
+
+            // ✅ Parse the response - backend returns CustomerResponseDTO
+            // Extract customer ID, contact, email
+            com.google.gson.JsonObject jsonResponse = gson.fromJson(responseBody, com.google.gson.JsonObject.class);
+
+            CustomerDTO savedCustomer = new CustomerDTO();
+            savedCustomer.setId(jsonResponse.get("customerId").getAsLong());
+            savedCustomer.setContact(jsonResponse.get("contact").getAsString());
+
+            if (jsonResponse.has("email") && !jsonResponse.get("email").isJsonNull()) {
+                savedCustomer.setEmail(jsonResponse.get("email").getAsString());
+            }
+
+            System.out.println("Customer processed successfully - ID: " + savedCustomer.getId());
+            return savedCustomer;
         }
     }
 

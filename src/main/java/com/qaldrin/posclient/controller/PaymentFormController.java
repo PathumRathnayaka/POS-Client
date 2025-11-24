@@ -99,9 +99,11 @@ public class PaymentFormController implements Initializable {
 
         SaleDataService dataService = SaleDataService.getInstance();
         CustomerDTO customer = AddCustomerFormController.getTempCustomerDTO();
+        String saleId = AddCustomerFormController.getTempSaleId(); // ✅ Get sale ID separately
         ObservableList<SaleItem> saleItems = dataService.getCurrentSaleItems();
 
         System.out.println("Customer from temp: " + (customer != null ? customer.getContact() : "null"));
+        System.out.println("Sale ID from temp: " + saleId);
         System.out.println("Sale items count: " + (saleItems != null ? saleItems.size() : 0));
 
         if (customer == null || saleItems == null || saleItems.isEmpty()) {
@@ -111,12 +113,19 @@ public class PaymentFormController implements Initializable {
 
         if ("WALK-IN".equalsIgnoreCase(customer.getContact())) {
             if (saleIdLabel != null) {
-                saleIdLabel.setText(customer.getSaleId() + " (Quick Sale)");
+                saleIdLabel.setText(saleId + " (Quick Sale)");
                 saleIdLabel.setStyle("-fx-text-fill: #3498db; -fx-font-weight: bold;");
             }
             if (customerContactLabel != null) {
                 customerContactLabel.setText("Customer: Walk-in");
                 customerContactLabel.setStyle("-fx-text-fill: #7f8c8d; -fx-font-style: italic;");
+            }
+        } else {
+            if (saleIdLabel != null) {
+                saleIdLabel.setText("Sale ID: " + saleId);
+            }
+            if (customerContactLabel != null) {
+                customerContactLabel.setText("Customer: " + customer.getContact());
             }
         }
 
@@ -430,13 +439,16 @@ public class PaymentFormController implements Initializable {
             }
 
             CustomerDTO tempCustomer = AddCustomerFormController.getTempCustomerDTO();
-            if (tempCustomer == null) {
-                showAlert(Alert.AlertType.ERROR, "No Customer",
-                        "Customer information is missing. Please add customer first.");
+            String tempSaleId = AddCustomerFormController.getTempSaleId(); // ✅ Get sale ID
+
+            if (tempCustomer == null || tempSaleId == null) {
+                showAlert(Alert.AlertType.ERROR, "No Data",
+                        "Customer or sale information is missing. Please add customer first.");
                 return;
             }
 
-            System.out.println("Processing payment for customer: " + tempCustomer.getContact());
+            System.out.println("Processing payment for customer: " + tempCustomer.getContact() +
+                    ", Sale ID: " + tempSaleId);
 
             // Show processing message
             if (invoiceMessage != null) {
@@ -446,18 +458,13 @@ public class PaymentFormController implements Initializable {
 
             new Thread(() -> {
                 try {
-                    // STEP 1: Save customer - backend generates sale ID
+                    // STEP 1: Save/Get customer - backend returns existing or creates new
                     CustomerDTO savedCustomer = apiService.saveCustomer(tempCustomer);
-                    System.out.println("Customer saved with sale ID: " + savedCustomer.getSaleId());
+                    System.out.println("Customer processed - ID: " + savedCustomer.getId());
 
-                    // CRITICAL: Update temp customer with backend-generated sale ID
-                    tempCustomer.setSaleId(savedCustomer.getSaleId());
-                    tempCustomer.setId(savedCustomer.getId());
-                    AddCustomerFormController.setTempCustomerDTO(tempCustomer);
-
-                    // STEP 2: Process payment with the correct sale ID
+                    // STEP 2: Process payment with CLIENT-GENERATED sale ID
                     PaymentRequestDTO paymentRequest = new PaymentRequestDTO();
-                    paymentRequest.setSaleId(savedCustomer.getSaleId()); // Use backend sale ID
+                    paymentRequest.setSaleId(tempSaleId); // ✅ Use CLIENT sale ID, not backend
                     paymentRequest.setCustomerContact(savedCustomer.getContact());
                     paymentRequest.setCustomerEmail(savedCustomer.getEmail());
                     paymentRequest.setSaleItems(toSaleItemDTOList());
@@ -504,7 +511,7 @@ public class PaymentFormController implements Initializable {
                             // STEP 6: Show success message
                             StringBuilder message = new StringBuilder();
                             message.append("Payment processed successfully!\n\n");
-                            message.append(String.format("Sale ID: %s\n", savedCustomer.getSaleId()));
+                            message.append(String.format("Sale ID: %s\n", tempSaleId));
                             message.append(String.format("Customer: %s\n", savedCustomer.getContact()));
 
                             if (walletBalanceUsed.compareTo(BigDecimal.ZERO) > 0) {
@@ -599,122 +606,7 @@ public class PaymentFormController implements Initializable {
         return saleItemDTOs;
     }
 
-    private void processPayment(CustomerDTO tempCustomer, BigDecimal paidAmount,
-                                BigDecimal originalTotal, BigDecimal amountToPay) {
-        SaleDataService dataService = SaleDataService.getInstance();
-        ObservableList<SaleItem> saleItems = dataService.getCurrentSaleItems();
 
-        List<SaleItemDTO> saleItemDTOs = new ArrayList<>();
-        for (SaleItem item : saleItems) {
-            SaleItemDTO dto = new SaleItemDTO();
-            dto.setProductId(item.getId());
-            dto.setProductName(item.getName());
-            dto.setBarcode(item.getBarcode());
-            dto.setQuantity(item.getQuantity());
-            dto.setUnitPrice(item.getSalePrice());
-            dto.setTotalPrice(item.getAmount());
-            saleItemDTOs.add(dto);
-        }
-
-        PaymentRequestDTO paymentRequest = new PaymentRequestDTO();
-        paymentRequest.setSaleId(tempCustomer.getSaleId());
-        paymentRequest.setCustomerContact(tempCustomer.getContact());
-        paymentRequest.setCustomerEmail(tempCustomer.getEmail());
-        paymentRequest.setSaleItems(saleItemDTOs);
-        paymentRequest.setSubTotal(dataService.getSubtotal());
-        paymentRequest.setTaxAmount(dataService.getTax());
-        paymentRequest.setDiscountAmount(BigDecimal.ZERO);
-        paymentRequest.setTotalAmount(originalTotal);
-        paymentRequest.setPaidAmount(paidAmount);
-        paymentRequest.setChangeAmount(paidAmount.subtract(amountToPay));
-        paymentRequest.setPaymentMethod(selectedPaymentMethod);
-
-        // Show processing message
-        if (invoiceMessage != null) {
-            invoiceMessage.setVisible(true);
-            invoiceMessage.setManaged(true);
-        }
-
-        new Thread(() -> {
-            try {
-                // STEP 1: Save customer to server
-                CustomerDTO savedCustomer = apiService.saveCustomer(tempCustomer);
-                System.out.println("Customer saved: " + savedCustomer.getSaleId());
-
-                // STEP 2: Process payment
-                boolean success = apiService.processPayment(paymentRequest);
-
-                if (success) {
-                    System.out.println("Payment processed successfully!");
-
-                    // STEP 3: Deduct wallet balance if used
-                    if (walletBalanceUsed.compareTo(BigDecimal.ZERO) > 0 &&
-                            !"WALK-IN".equalsIgnoreCase(tempCustomer.getContact())) {
-                        try {
-                            apiService.deductFromWallet(tempCustomer.getContact(), walletBalanceUsed);
-                            System.out.println("Deducted $" + walletBalanceUsed + " from wallet");
-                        } catch (Exception we) {
-                            System.err.println("Failed to deduct from wallet: " + we.getMessage());
-                        }
-                    }
-
-                    Platform.runLater(() -> {
-                        paymentProcessed = true;
-
-                        // STEP 4: Update stock
-                        System.out.println("Stock update initiated");
-                        updateStockAfterPayment(saleItems);
-
-                        // STEP 5: Show success
-                        System.out.println("Success dialog shown");
-                        showPaymentSuccess(tempCustomer, originalTotal, amountToPay, paidAmount);
-
-                        // STEP 6: Clear temporary data
-                        AddCustomerFormController.clearTempCustomerDTO();
-                        SaleDataService.getInstance().clearSaleData();
-                        walletBalance = BigDecimal.ZERO;
-                        walletBalanceUsed = BigDecimal.ZERO;
-
-                        // STEP 7: Hide processing message
-                        if (invoiceMessage != null) {
-                            invoiceMessage.setVisible(false);
-                            invoiceMessage.setManaged(false);
-                        }
-
-                        System.out.println("Temporary customer data cleared");
-
-                        // STEP 8: Reload Dashboard - THIS IS THE KEY FIX
-                        System.out.println("Payment completed - UI updated");
-                        if (dashboardFormController != null) {
-                            dashboardFormController.loadDashboardContentAfterPayment();
-                        }
-                    });
-                } else {
-                    Platform.runLater(() -> {
-                        if (invoiceMessage != null) {
-                            invoiceMessage.setVisible(false);
-                            invoiceMessage.setManaged(false);
-                        }
-                        showAlert(Alert.AlertType.ERROR, "Payment Failed",
-                                "Failed to process payment. Please try again.");
-                    });
-                }
-
-            } catch (Exception e) {
-                Platform.runLater(() -> {
-                    if (invoiceMessage != null) {
-                        invoiceMessage.setVisible(false);
-                        invoiceMessage.setManaged(false);
-                    }
-                    System.err.println("Payment error: " + e.getMessage());
-                    e.printStackTrace();
-                    showAlert(Alert.AlertType.ERROR, "Payment Error",
-                            "Error processing payment: " + e.getMessage() +
-                                    "\n\nPlease check server connection.");
-                });
-            }
-        }).start();
-    }
 
     private void updateStockAfterPayment(ObservableList<SaleItem> saleItems) {
         new Thread(() -> {
@@ -733,34 +625,7 @@ public class PaymentFormController implements Initializable {
         }).start();
     }
 
-    private void showPaymentSuccess(CustomerDTO customer, BigDecimal originalTotal,
-                                    BigDecimal amountToPay, BigDecimal paidAmount) {
-        StringBuilder message = new StringBuilder();
-        message.append("Payment processed successfully!\n\n");
-        message.append(String.format("Sale ID: %s\n", customer.getSaleId()));
-        message.append(String.format("Customer: %s\n", customer.getContact()));
 
-        // Show wallet savings if used
-        if (walletBalanceUsed.compareTo(BigDecimal.ZERO) > 0) {
-            message.append(String.format("Original Total: $%.2f\n", originalTotal));
-            message.append(String.format("Wallet Used: $%.2f\n", walletBalanceUsed));
-            message.append(String.format("Amount to Pay: $%.2f\n", amountToPay));
-        } else {
-            message.append(String.format("Total: $%.2f\n", originalTotal));
-        }
-
-        message.append(String.format("Paid: $%.2f\n", paidAmount));
-
-        BigDecimal change = paidAmount.subtract(amountToPay);
-        if (change.compareTo(BigDecimal.ZERO) < 0) {
-            change = BigDecimal.ZERO;
-        }
-        message.append(String.format("Change: $%.2f\n", change));
-        message.append(String.format("Payment Method: %s\n\n", selectedPaymentMethod));
-        message.append("Customer and sale data saved to server successfully!");
-
-        showAlert(Alert.AlertType.INFORMATION, "Payment Successful", message.toString());
-    }
 
     @FXML
     public void addwalletOnClick(ActionEvent actionEvent) {

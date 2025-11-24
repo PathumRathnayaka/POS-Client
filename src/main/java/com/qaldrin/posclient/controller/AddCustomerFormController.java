@@ -39,8 +39,9 @@ public class AddCustomerFormController {
     private Stage stage;
     private final ApiService apiService = new ApiService();
 
-    // Static variable to hold temporary customer data (NOT saved to server yet)
+    // ✅ Store BOTH customer AND sale ID separately
     private static CustomerDTO tempCustomerDTO;
+    private static String tempSaleId;
 
     @FXML
     public void initialize() {
@@ -93,10 +94,14 @@ public class AddCustomerFormController {
             return;
         }
 
-        // Create customer DTO and store TEMPORARILY (not saved to server yet)
-        tempCustomerDTO = new CustomerDTO(saleId, contact, email.isEmpty() ? null : email);
+        // ✅ Create customer DTO WITHOUT sale ID
+        tempCustomerDTO = new CustomerDTO(contact, email.isEmpty() ? null : email);
 
-        System.out.println("Customer saved TEMPORARILY (not sent to server yet): " + tempCustomerDTO);
+        // ✅ Store sale ID separately
+        tempSaleId = saleId;
+
+        System.out.println("Customer saved TEMPORARILY: " + tempCustomerDTO);
+        System.out.println("Sale ID saved TEMPORARILY: " + tempSaleId);
 
         showAlert(AlertType.INFORMATION, "Success",
                 "Customer information saved temporarily!\n\n" +
@@ -110,7 +115,6 @@ public class AddCustomerFormController {
 
     @FXML
     private void onCancelCustomer() {
-        // Confirm cancellation
         boolean confirmed = showConfirmation("Cancel",
                 "Are you sure you want to cancel?\nAll entered data will be lost.");
 
@@ -121,32 +125,38 @@ public class AddCustomerFormController {
 
     /**
      * Get the temporarily saved customer (null if not saved yet)
-     * This will be called by PaymentFormController to save to server
      */
     public static CustomerDTO getTempCustomerDTO() {
         return tempCustomerDTO;
     }
 
     /**
-     * Clear the temporary customer after payment is completed
+     * Get the temporarily saved sale ID
+     */
+    public static String getTempSaleId() {
+        return tempSaleId;
+    }
+
+    /**
+     * Clear the temporary data after payment is completed
      */
     public static void clearTempCustomerDTO() {
         tempCustomerDTO = null;
-        System.out.println("Temporary customer data cleared");
+        tempSaleId = null;
+        System.out.println("Temporary customer and sale data cleared");
     }
 
     /**
-     * Set temporary customer (used when resuming paused sales)
+     * Set temporary customer and sale ID (used when resuming paused sales)
      */
-    public static void setTempCustomerDTO(CustomerDTO customerDTO) {
+    public static void setTempCustomerDTO(CustomerDTO customerDTO, String saleId) {
         tempCustomerDTO = customerDTO;
-        System.out.println("Customer data set in temp storage - Sale ID: " +
-                (customerDTO != null ? customerDTO.getSaleId() : "null"));
+        tempSaleId = saleId;
+        System.out.println("Customer data set in temp storage - Contact: " +
+                (customerDTO != null ? customerDTO.getContact() : "null") +
+                ", Sale ID: " + saleId);
     }
 
-    /**
-     * Get the current stage
-     */
     private Stage getStage() {
         if (stage == null) {
             stage = (Stage) saveButton.getScene().getWindow();
@@ -154,9 +164,6 @@ public class AddCustomerFormController {
         return stage;
     }
 
-    /**
-     * Show alert dialog
-     */
     private void showAlert(AlertType type, String title, String message) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
@@ -167,9 +174,6 @@ public class AddCustomerFormController {
         alert.showAndWait();
     }
 
-    /**
-     * Show confirmation dialog
-     */
     private boolean showConfirmation(String title, String message) {
         Alert alert = new Alert(AlertType.CONFIRMATION);
         alert.setTitle(title);
