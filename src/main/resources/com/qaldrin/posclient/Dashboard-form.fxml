@@ -53,10 +53,12 @@
                 </JFXButton>
 
                 <!-- Third Row -->
-                <JFXButton fx:id="pauseCustomer" buttonType="RAISED" mnemonicParsing="false" onAction="#pauseCustomerOnClick" layoutX="5.0" layoutY="135.0" prefHeight="60.0" prefWidth="143.0" style="-fx-background-color: #25D366; -fx-text-fill: white; -fx-font-weight: bold;" text="Pause Customer">
-                    <cursor>
-                        <Cursor fx:constant="HAND" />
-                    </cursor>
+                <JFXButton fx:id="pauseCustomer" buttonType="RAISED" mnemonicParsing="false"
+                           onAction="#pauseCustomerOnClick"
+                           layoutX="5.0" layoutY="135.0" prefHeight="60.0" prefWidth="143.0"
+                           style="-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-weight: bold;"
+                           text="Pause Sale">
+                    <cursor><Cursor fx:constant="HAND" /></cursor>
                 </JFXButton>
                 <JFXButton fx:id="syncDatabaseButton" buttonType="RAISED" mnemonicParsing="false" onAction="#onSyncDatabaseClick" layoutX="153.0" layoutY="135.0" prefHeight="60.0" prefWidth="143.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Sync Database">
                     <cursor>

@@ -2,6 +2,7 @@ package com.qaldrin.posclient.controller;
 
 import com.jfoenix.controls.JFXButton;
 import com.qaldrin.posclient.dto.CustomerDTO;
+import com.qaldrin.posclient.model.PausedSaleData;
 import com.qaldrin.posclient.service.SaleDataService;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -10,6 +11,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.Label;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Modality;
@@ -20,6 +22,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 public class DashboardFormController implements Initializable {
@@ -47,6 +51,7 @@ public class DashboardFormController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         // Automatically load Dashboard content when the form loads
         loadDashboardContent();
+        updatePauseResumeButton();
     }
 
     /**
@@ -87,6 +92,9 @@ public class DashboardFormController implements Initializable {
         // Reload the dashboard content to start fresh
         loadDashboardContent();
 
+        // ✅ ADD: Update button state
+        updatePauseResumeButton();
+
         System.out.println("Dashboard reloaded - ready for new sale");
     }
 
@@ -121,6 +129,7 @@ public class DashboardFormController implements Initializable {
     private void onDashboardButtonClick() {
         System.out.println("Dashboard clicked");
         loadDashboardContent();
+        updatePauseResumeButton();
     }
 
     @FXML
@@ -138,7 +147,13 @@ public class DashboardFormController implements Initializable {
     @FXML
     private void onDeleteButtonClick() {
         System.out.println("Delete clicked");
-        showAlert(Alert.AlertType.INFORMATION, "Coming Soon", "Delete feature is coming soon!");
+
+        // ✅ NEW: Call the removeSelectedItem method from DashboardContentController
+        if (dashboardContentController != null) {
+            dashboardContentController.removeSelectedItem();
+        } else {
+            showAlert(Alert.AlertType.ERROR, "Error", "Dashboard not loaded!");
+        }
     }
 
     @FXML
@@ -293,8 +308,152 @@ public class DashboardFormController implements Initializable {
 
     }
 
+    @FXML
     public void pauseCustomerOnClick(ActionEvent actionEvent) {
+        List<PausedSaleData> pausedSales = SaleDataService.getInstance().getPausedSales();
 
+        // ✅ If there are paused sales, this button acts as RESUME
+        if (!pausedSales.isEmpty()) {
+            resumePausedSale();
+            return;
+        }
+
+        // ✅ Otherwise, this button acts as PAUSE
+        System.out.println("Pause Customer clicked");
+
+        // Check if there's an active sale
+        if (dashboardContentController == null) {
+            showAlert(Alert.AlertType.ERROR, "Error", "Dashboard not loaded!");
+            return;
+        }
+
+        if (dashboardContentController.getSaleItems().isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "No Sale",
+                    "No active sale to pause. Please add items first.");
+            return;
+        }
+
+        CustomerDTO tempCustomer = AddCustomerFormController.getTempCustomerDTO();
+        if (tempCustomer == null) {
+            showAlert(Alert.AlertType.WARNING, "No Customer",
+                    "Please add customer information before pausing.");
+            return;
+        }
+
+        // ✅ Save current sale data to service
+        SaleDataService.getInstance().setSaleData(
+                dashboardContentController.getSaleItems(),
+                dashboardContentController.getSubtotal(),
+                dashboardContentController.getTax(),
+                dashboardContentController.getTotal()
+        );
+
+        // ✅ Pause the sale
+        SaleDataService.getInstance().pauseCurrentSale();
+
+        // ✅ Clear the dashboard
+        dashboardContentController.clearSale();
+
+        // ✅ Update button appearance
+        updatePauseResumeButton();
+
+        showAlert(Alert.AlertType.INFORMATION, "Sale Paused",
+                String.format("Sale for customer %s has been paused.\n\n" +
+                                "You can now start a new sale. Click 'Resume Sale' to continue this sale later.",
+                        tempCustomer.getContact()));
+    }
+    private void resumePausedSale() {
+        List<PausedSaleData> pausedSales = SaleDataService.getInstance().getPausedSales();
+
+        if (pausedSales.isEmpty()) {
+            showAlert(Alert.AlertType.INFORMATION, "No Paused Sales",
+                    "There are no paused sales to resume.");
+            return;
+        }
+
+        // ✅ If only one paused sale, resume it directly
+        if (pausedSales.size() == 1) {
+            PausedSaleData saleToResume = pausedSales.get(0);
+            resumeSpecificSale(saleToResume);
+            return;
+        }
+
+
+        // ✅ Multiple paused sales - Show selection dialog
+        ChoiceDialog<PausedSaleData> dialog = new ChoiceDialog<>(
+                pausedSales.get(0), pausedSales
+        );
+
+        dialog.setTitle("Resume Paused Sale");
+        dialog.setHeaderText("Select a paused sale to resume:");
+        dialog.setContentText("Paused Sales:");
+
+        // ✅ Format the display text for each paused sale
+        dialog.getItems().forEach(sale ->
+                System.out.println("Available: " + sale.getDisplayText())
+        );
+
+        Optional<PausedSaleData> result = dialog.showAndWait();
+
+        result.ifPresent(this::resumeSpecificSale);
+    }
+
+    private void resumeSpecificSale(PausedSaleData selectedSale) {
+        // ✅ Resume the selected sale
+        SaleDataService.getInstance().resumePausedSale(selectedSale);
+
+        // ✅ Reload dashboard with resumed sale
+        loadDashboardContentWithResumedSale(selectedSale);
+
+        // ✅ Update button appearance
+        updatePauseResumeButton();
+
+        showAlert(Alert.AlertType.INFORMATION, "Sale Resumed",
+                "Sale " + selectedSale.getSaleId() + " has been resumed.");
+    }
+
+    private void updatePauseResumeButton() {
+        if (pauseCustomer == null) return;
+
+        List<PausedSaleData> pausedSales = SaleDataService.getInstance().getPausedSales();
+
+        if (pausedSales.isEmpty()) {
+            // ✅ No paused sales - Show as PAUSE button (Orange)
+            pauseCustomer.setText("Pause Sale");
+            pauseCustomer.setStyle("-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-weight: bold;");
+        } else {
+            // ✅ Has paused sales - Show as RESUME button (Green)
+            pauseCustomer.setText("Resume Sale (" + pausedSales.size() + ")");
+            pauseCustomer.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;");
+        }
+    }
+
+    private void loadDashboardContentWithResumedSale(PausedSaleData resumedSale) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/qaldrin/posclient/Dashboard-content.fxml")
+            );
+            AnchorPane content = loader.load();
+
+            dashboardContentController = loader.getController();
+
+            // ✅ Restore the sale items to the table
+            dashboardContentController.getSaleItems().addAll(resumedSale.getSaleItems());
+
+            // ✅ Display in primary scene
+            primaryScene.getChildren().clear();
+            primaryScene.getChildren().add(content);
+            AnchorPane.setTopAnchor(content, 0.0);
+            AnchorPane.setBottomAnchor(content, 0.0);
+            AnchorPane.setLeftAnchor(content, 0.0);
+            AnchorPane.setRightAnchor(content, 0.0);
+
+            System.out.println("Resumed sale loaded with " + resumedSale.getSaleItems().size() + " items");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to load resumed sale");
+        }
     }
 
     @FXML
