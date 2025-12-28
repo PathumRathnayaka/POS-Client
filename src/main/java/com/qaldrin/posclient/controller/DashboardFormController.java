@@ -78,21 +78,16 @@ public class DashboardFormController implements Initializable {
         }
     }
 
-    /**
-     * ADD THIS NEW METHOD - Reload dashboard after payment completion
-     */
     public void loadDashboardContentAfterPayment() {
         System.out.println("Reloading dashboard after payment completion...");
 
-        // Clear any existing sale data
         if (dashboardContentController != null) {
             dashboardContentController.clearSale();
         }
 
-        // Reload the dashboard content to start fresh
         loadDashboardContent();
 
-        // ✅ ADD: Update button state
+
         updatePauseResumeButton();
 
         System.out.println("Dashboard reloaded - ready for new sale");
@@ -106,10 +101,10 @@ public class DashboardFormController implements Initializable {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             AnchorPane content = loader.load();
 
-            // Clear existing content
+
             primaryScene.getChildren().clear();
 
-            // Add new content and anchor it to fill the parent
+
             primaryScene.getChildren().add(content);
             AnchorPane.setTopAnchor(content, 0.0);
             AnchorPane.setBottomAnchor(content, 0.0);
@@ -239,7 +234,7 @@ public class DashboardFormController implements Initializable {
             // Clear existing content
             primaryScene.getChildren().clear();
 
-            // Add new content and anchor it to fill the parent
+
             primaryScene.getChildren().add(content);
             AnchorPane.setTopAnchor(content, 0.0);
             AnchorPane.setBottomAnchor(content, 0.0);
@@ -275,7 +270,7 @@ public class DashboardFormController implements Initializable {
             // Center the popup on screen
             popupStage.centerOnScreen();
 
-            // Optional: Add custom window styling
+
             try {
                 URL cssUrl = getClass().getResource("/styles/main.css");
                 if (cssUrl != null) {
@@ -340,7 +335,7 @@ public class DashboardFormController implements Initializable {
             return;
         }
 
-        // ✅ Save current sale data to service
+
         SaleDataService.getInstance().setSaleData(
                 dashboardContentController.getSaleItems(),
                 dashboardContentController.getSubtotal(),
@@ -399,13 +394,13 @@ public class DashboardFormController implements Initializable {
     }
 
     private void resumeSpecificSale(PausedSaleData selectedSale) {
-        // ✅ Resume the selected sale
+
         SaleDataService.getInstance().resumePausedSale(selectedSale);
 
-        // ✅ Reload dashboard with resumed sale
+
         loadDashboardContentWithResumedSale(selectedSale);
 
-        // ✅ Update button appearance
+
         updatePauseResumeButton();
 
         showAlert(Alert.AlertType.INFORMATION, "Sale Resumed",
@@ -418,11 +413,11 @@ public class DashboardFormController implements Initializable {
         List<PausedSaleData> pausedSales = SaleDataService.getInstance().getPausedSales();
 
         if (pausedSales.isEmpty()) {
-            // ✅ No paused sales - Show as PAUSE button (Orange)
+
             pauseCustomer.setText("Pause Sale");
             pauseCustomer.setStyle("-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-weight: bold;");
         } else {
-            // ✅ Has paused sales - Show as RESUME button (Green)
+
             pauseCustomer.setText("Resume Sale (" + pausedSales.size() + ")");
             pauseCustomer.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;");
         }
@@ -437,10 +432,10 @@ public class DashboardFormController implements Initializable {
 
             dashboardContentController = loader.getController();
 
-            // ✅ Restore the sale items to the table
+
             dashboardContentController.getSaleItems().addAll(resumedSale.getSaleItems());
 
-            // ✅ Display in primary scene
+
             primaryScene.getChildren().clear();
             primaryScene.getChildren().add(content);
             AnchorPane.setTopAnchor(content, 0.0);
@@ -465,30 +460,30 @@ public class DashboardFormController implements Initializable {
             return;
         }
 
-        // 1️⃣ Ensure items exist
+
         if (dashboardContentController.getSaleItems().isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "No Items", "Please add items before processing Quick Sale!");
             return;
         }
 
-        // 2️⃣ Generate a unique sale ID for walk-in customer
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         String timestamp = LocalDateTime.now().format(formatter);
         String quickSaleId = "SALE-" + timestamp;
 
         System.out.println("Generated Quick Sale ID: " + quickSaleId);
 
-        // 3️⃣ Create a temporary Walk-in customer
+
         CustomerDTO walkInCustomer = new CustomerDTO();
         walkInCustomer.setContact("WALK-IN");
         walkInCustomer.setEmail("");
 
-        // 4️⃣ ✅ CRITICAL: Store BOTH customer AND sale ID in temp storage
+
         AddCustomerFormController.setTempCustomerDTO(walkInCustomer, quickSaleId);
 
         System.out.println("Walk-in customer stored with Sale ID: " + quickSaleId);
 
-        // 5️⃣ Store walk-in sale data in SaleDataService
+
         SaleDataService.getInstance().setSaleData(
                 dashboardContentController.getSaleItems(),
                 dashboardContentController.getSubtotal(),
@@ -497,7 +492,7 @@ public class DashboardFormController implements Initializable {
         );
         SaleDataService.getInstance().setCustomer(walkInCustomer);
 
-        // 6️⃣ Load payment form
+
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/qaldrin/posclient/Payment-form.fxml"));
             AnchorPane content = loader.load();
