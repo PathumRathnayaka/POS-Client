@@ -224,9 +224,9 @@ public class DashboardContentController implements Initializable {
         BigDecimal tax = subtotal.multiply(BigDecimal.valueOf(TAX_RATE));
         BigDecimal total = subtotal.add(tax);
 
-        subtotalLabel.setText(String.format("Subtotal: $%.2f", subtotal));
-        taxLabel.setText(String.format("TAX: $%.2f", tax));
-        totalLabel.setText(String.format("Total: $%.2f", total));
+        subtotalLabel.setText(String.format("Subtotal: Rs %.2f", subtotal));
+        taxLabel.setText(String.format("TAX: Rs %.2f", tax));
+        totalLabel.setText(String.format("Total: Rs %.2f", total));
     }
 
     public ObservableList<SaleItem> getSaleItems() {

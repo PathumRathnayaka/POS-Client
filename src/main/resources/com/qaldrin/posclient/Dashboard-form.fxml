@@ -1,69 +1,97 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
+<?import com.jfoenix.controls.JFXButton?>
+<?import javafx.scene.Cursor?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.Cursor?>
-<?import com.jfoenix.controls.JFXButton?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
 
-<AnchorPane fx:id="DashBoard" prefHeight="766.0" prefWidth="1366.0"
-            style="-fx-background-color: #1a1a1a;"
-            xmlns="http://javafx.com/javafx/20.0.1"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.qaldrin.posclient.controller.DashboardFormController">
+<AnchorPane fx:id="DashBoard" prefHeight="766.0" prefWidth="1366.0" style="-fx-background-color: #1a1a1a;" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.qaldrin.posclient.controller.DashboardFormController">
 
     <children>
         <!-- Main content area -->
-        <AnchorPane fx:id="primaryScene" layoutX="5.0" layoutY="46.0"
-                    prefHeight="717.0" prefWidth="1050.0"
-                    style="-fx-background-color: #2c3e50; -fx-border-color: #34495e; -fx-border-width: 1px;" />
+        <AnchorPane fx:id="primaryScene" layoutX="5.0" layoutY="46.0" prefHeight="717.0" prefWidth="1050.0" style="-fx-background-color: #2c3e50; -fx-border-color: #34495e; -fx-border-width: 1px;" />
 
         <!-- Navigation panel -->
-        <AnchorPane fx:id="navigationPane" layoutX="1059.0" layoutY="46.0"
-                    prefHeight="717.0" prefWidth="301.0"
-                    style="-fx-background-color: #2c3e50; -fx-border-color: #34495e; -fx-border-width: 1px;">
+        <AnchorPane fx:id="navigationPane" layoutX="1059.0" layoutY="46.0" prefHeight="717.0" prefWidth="301.0" style="-fx-background-color: #2c3e50; -fx-border-color: #34495e; -fx-border-width: 1px;">
 
             <children>
                 <!-- First Row -->
-                <JFXButton fx:id="deleteButton" buttonType="RAISED" mnemonicParsing="false" onAction="#onDeleteButtonClick" layoutX="5.0" layoutY="5.0" prefHeight="60.0" prefWidth="143.0" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;" text="Delete">
+                <JFXButton fx:id="deleteButton" buttonType="RAISED" layoutX="5.0" layoutY="5.0" mnemonicParsing="false" onAction="#onDeleteButtonClick" prefHeight="60.0" prefWidth="143.0" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;" text="Delete">
                     <cursor>
                         <Cursor fx:constant="HAND" />
                     </cursor>
+               <graphic>
+                  <ImageView fitHeight="30.0" fitWidth="30.0">
+                     <image>
+                        <Image url="@images/delete.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
                 </JFXButton>
-                <JFXButton fx:id="quantityButton" buttonType="RAISED" mnemonicParsing="false" onAction="#onQuantityButtonClick" layoutX="153.0" layoutY="5.0" prefHeight="60.0" prefWidth="143.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Quantity">
+                <JFXButton fx:id="quantityButton" buttonType="RAISED" layoutX="153.0" layoutY="5.0" mnemonicParsing="false" onAction="#onQuantityButtonClick" prefHeight="60.0" prefWidth="143.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Quantity">
                     <cursor>
                         <Cursor fx:constant="HAND" />
                     </cursor>
+               <graphic>
+                  <ImageView fitHeight="30.0" fitWidth="30.0">
+                     <image>
+                        <Image url="@images/quantity.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
                 </JFXButton>
 
                 <!-- Second Row -->
-                <JFXButton buttonType="RAISED" mnemonicParsing="false" onAction="#onNewCustomerButtonClick" layoutX="5.0" layoutY="70.0" prefHeight="60.0" prefWidth="143.0" style="-fx-background-color: #2980b9; -fx-text-fill: white; -fx-font-weight: bold;" text="New Customer">
+                <JFXButton buttonType="RAISED" layoutX="5.0" layoutY="70.0" mnemonicParsing="false" onAction="#onNewCustomerButtonClick" prefHeight="60.0" prefWidth="143.0" style="-fx-background-color: #2980b9; -fx-text-fill: white; -fx-font-weight: bold;" text="New Customer">
                     <cursor>
                         <Cursor fx:constant="HAND" />
                     </cursor>
+               <graphic>
+                  <ImageView fitHeight="30.0" fitWidth="30.0">
+                     <image>
+                        <Image url="@images/addCustomer.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
                 </JFXButton>
-                <JFXButton fx:id="lockBtn" buttonType="RAISED" mnemonicParsing="false" onAction="#lockOnClick" layoutX="153.0" layoutY="70.0" prefHeight="60.0" prefWidth="143.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Lock">
+                <JFXButton fx:id="lockBtn" buttonType="RAISED" layoutX="153.0" layoutY="70.0" mnemonicParsing="false" onAction="#lockOnClick" prefHeight="60.0" prefWidth="143.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Lock">
                     <cursor>
                         <Cursor fx:constant="HAND" />
                     </cursor>
+               <graphic>
+                  <ImageView fitHeight="30.0" fitWidth="30.0">
+                     <image>
+                        <Image url="@images/lock.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
                 </JFXButton>
 
                 <!-- Third Row -->
-                <JFXButton fx:id="pauseCustomer" buttonType="RAISED" mnemonicParsing="false"
-                           onAction="#pauseCustomerOnClick"
-                           layoutX="5.0" layoutY="135.0" prefHeight="60.0" prefWidth="143.0"
-                           style="-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-weight: bold;"
-                           text="Pause Sale">
+                <JFXButton fx:id="pauseCustomer" buttonType="RAISED" layoutX="5.0" layoutY="135.0" mnemonicParsing="false" onAction="#pauseCustomerOnClick" prefHeight="60.0" prefWidth="143.0" style="-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-weight: bold;" text="Pause Sale">
                     <cursor><Cursor fx:constant="HAND" /></cursor>
+               <graphic>
+                  <ImageView fitHeight="30.0" fitWidth="30.0">
+                     <image>
+                        <Image url="@images/pause.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
                 </JFXButton>
-                <JFXButton fx:id="syncDatabaseButton" buttonType="RAISED" mnemonicParsing="false" onAction="#onSyncDatabaseClick" layoutX="153.0" layoutY="135.0" prefHeight="60.0" prefWidth="143.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Sync Database">
+                <JFXButton fx:id="syncDatabaseButton" buttonType="RAISED" layoutX="153.0" layoutY="135.0" mnemonicParsing="false" onAction="#onSyncDatabaseClick" prefHeight="60.0" prefWidth="143.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Sync Database">
                     <cursor>
                         <Cursor fx:constant="HAND" />
                     </cursor>
+               <graphic>
+                  <ImageView fitHeight="30.0" fitWidth="30.0">
+                     <image>
+                        <Image url="@images/syncDB.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
                 </JFXButton>
 
                 <!-- Quick Sale Button -->
@@ -71,6 +99,13 @@
                     <cursor>
                         <Cursor fx:constant="HAND" />
                     </cursor>
+               <graphic>
+                  <ImageView fitHeight="30.0" fitWidth="30.0">
+                     <image>
+                        <Image url="@images/quickSale.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
                 </JFXButton>
 
                 <!-- Payment Button -->
@@ -78,47 +113,106 @@
                     <cursor>
                         <Cursor fx:constant="HAND" />
                     </cursor>
+               <graphic>
+                  <ImageView fitHeight="30.0" fitWidth="30.0">
+                     <image>
+                        <Image url="@images/payment.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
                 </JFXButton>
 
                 <!-- Bottom Grid - First Row -->
-                <JFXButton buttonType="RAISED" mnemonicParsing="false" layoutX="5.0" layoutY="435.0" prefHeight="70.0" prefWidth="93.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Discount %">
+                <JFXButton buttonType="RAISED" contentDisplay="TOP" graphicTextGap="6" layoutX="5.0" layoutY="435.0" mnemonicParsing="false" prefHeight="70.0" prefWidth="93.0" style="-fx-background-color: #2c3e50;                -fx-text-fill: white;                -fx-font-weight: bold;                -fx-font-size: 11px;" text="Discount %">
+
                     <cursor>
                         <Cursor fx:constant="HAND" />
                     </cursor>
+
+                    <graphic>
+                        <ImageView fitHeight="26.0" fitWidth="26.0" preserveRatio="true">
+                            <image>
+                                <Image url="@images/discount.png" />
+                            </image>
+                        </ImageView>
+                    </graphic>
+
                 </JFXButton>
-                <JFXButton buttonType="RAISED" mnemonicParsing="false" layoutX="103.0" layoutY="435.0" prefHeight="70.0" prefWidth="93.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Refund">
+                <JFXButton buttonType="RAISED" contentDisplay="TOP" layoutX="103.0" layoutY="435.0" mnemonicParsing="false" prefHeight="70.0" prefWidth="93.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Refund">
                     <cursor>
                         <Cursor fx:constant="HAND" />
                     </cursor>
+               <graphic>
+                  <ImageView fitHeight="30.0" fitWidth="30.0">
+                     <image>
+                        <Image url="@images/refund.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
                 </JFXButton>
-                <JFXButton fx:id="dashboardButton" buttonType="RAISED" mnemonicParsing="false" onAction="#onDashboardButtonClick" layoutX="201.0" layoutY="435.0" prefHeight="70.0" prefWidth="95.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Dashboard">
+                <JFXButton fx:id="dashboardButton" buttonType="RAISED" contentDisplay="TOP"  graphicTextGap="6"  wrapText="true" layoutX="201.0" layoutY="435.0" mnemonicParsing="false" onAction="#onDashboardButtonClick" prefHeight="70.0" prefWidth="95.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Dashboard">
                     <cursor>
                         <Cursor fx:constant="HAND" />
                     </cursor>
+               <graphic>
+                  <ImageView fitHeight="30.0" fitWidth="30.0">
+                     <image>
+                        <Image url="@images/dashboard.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
                 </JFXButton>
 
                 <!-- Bottom Grid - Second Row -->
-                <JFXButton buttonType="RAISED" mnemonicParsing="false" layoutX="5.0" layoutY="510.0" prefHeight="70.0" prefWidth="93.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Cash Drawer">
+                <JFXButton buttonType="RAISED" layoutX="5.0" contentDisplay="TOP"  graphicTextGap="6"  wrapText="true" layoutY="510.0" mnemonicParsing="false" prefHeight="70.0" prefWidth="93.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Cash Drawer">
                     <cursor>
                         <Cursor fx:constant="HAND" />
                     </cursor>
+               <graphic>
+                  <ImageView fitHeight="26.0" fitWidth="26.0">
+                     <image>
+                        <Image url="@images/drawer.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
                 </JFXButton>
-                <JFXButton buttonType="RAISED" mnemonicParsing="false" layoutX="103.0" layoutY="510.0" prefHeight="70.0" prefWidth="93.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Comment">
+                <JFXButton buttonType="RAISED" layoutX="103.0" contentDisplay="TOP"  graphicTextGap="6"  wrapText="true" layoutY="510.0" mnemonicParsing="false" prefHeight="70.0" prefWidth="93.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Comment">
                     <cursor>
                         <Cursor fx:constant="HAND" />
                     </cursor>
+               <graphic>
+                  <ImageView fitHeight="26.0" fitWidth="26.0">
+                     <image>
+                        <Image url="@images/comments.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
                 </JFXButton>
-                <JFXButton fx:id="productButton" buttonType="RAISED" mnemonicParsing="false" onAction="#onProductClick" layoutX="201.0" layoutY="510.0" prefHeight="70.0" prefWidth="95.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Product">
+                <JFXButton fx:id="productButton" contentDisplay="TOP"  graphicTextGap="6"  wrapText="true" buttonType="RAISED" layoutX="201.0" layoutY="510.0" mnemonicParsing="false" onAction="#onProductClick" prefHeight="70.0" prefWidth="95.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Product">
                     <cursor>
                         <Cursor fx:constant="HAND" />
                     </cursor>
+               <graphic>
+                  <ImageView fitHeight="30.0" fitWidth="30.0">
+                     <image>
+                        <Image url="@images/product.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
                 </JFXButton>
 
                 <!-- Bottom Grid - Third Row -->
-                <JFXButton fx:id="settingButton" buttonType="RAISED" mnemonicParsing="false" onAction="#onSettingButtonClick" layoutX="201.0" layoutY="585.0" prefHeight="70.0" prefWidth="95.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Setting">
+                <JFXButton fx:id="settingButton" contentDisplay="TOP"  graphicTextGap="6"  wrapText="true" buttonType="RAISED" layoutX="201.0" layoutY="585.0" mnemonicParsing="false" onAction="#onSettingButtonClick" prefHeight="70.0" prefWidth="95.0" style="-fx-background-color: #2c3e50; -fx-text-fill: white; -fx-font-weight: bold;" text="Setting">
                     <cursor>
                         <Cursor fx:constant="HAND" />
                     </cursor>
+               <graphic>
+                  <ImageView fitHeight="26.0" fitWidth="26.0">
+                     <image>
+                        <Image url="@images/setting.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
                 </JFXButton>
             </children>
         </AnchorPane>
@@ -126,12 +220,8 @@
         <!-- Header -->
         <Pane layoutX="6.0" layoutY="6.0" prefHeight="37.0" prefWidth="1352.0" style="-fx-background-color: #34495e;">
             <children>
-                <Label fx:id="connectionStatusLabel" layoutX="14.0" layoutY="9.0"
-                       style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #ecf0f1;"
-                       text="Status: Checking connection..." />
-                <Label fx:id="notificationlabel" layoutX="1221.0" layoutY="11.0"
-                       text="Notification : 0"
-                       style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #ecf0f1;" />
+                <Label fx:id="connectionStatusLabel" layoutX="14.0" layoutY="9.0" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #ecf0f1;" text="Status: Checking connection..." />
+                <Label fx:id="notificationlabel" layoutX="1221.0" layoutY="11.0" style="-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #ecf0f1;" text="Notification : 0" />
             </children>
         </Pane>
     </children>
