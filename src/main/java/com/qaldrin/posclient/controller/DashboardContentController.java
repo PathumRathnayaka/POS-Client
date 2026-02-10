@@ -142,11 +142,11 @@ public class DashboardContentController implements Initializable {
 
                 // Text
                 setText(String.format(
-                        "%s  | %s  | $%.2f  | Stock: %d",
+                        "%s  | %s  | $%.2f  | Stock: %s",
                         product.getName(),
                         product.getCategory(),
                         product.getSalePrice(),
-                        product.getAvailableQuantity()));
+                        product.getAvailableQuantity().stripTrailingZeros().toPlainString()));
 
                 // Fix invisible items issue (important)
                 setPrefHeight(40);
@@ -192,7 +192,7 @@ public class DashboardContentController implements Initializable {
     }
 
     private void addProductToSale(ProductWithQuantityDTO product) {
-        if (product.getAvailableQuantity() == null || product.getAvailableQuantity() <= 0) {
+        if (product.getAvailableQuantity() == null || product.getAvailableQuantity().compareTo(BigDecimal.ZERO) <= 0) {
             showAlert("Out of Stock", "Product " + product.getName() + " is out of stock!");
             return;
         }
@@ -204,9 +204,10 @@ public class DashboardContentController implements Initializable {
         if (existingItem.isPresent()) {
             SaleItem item = existingItem.get();
             BigDecimal newQuantity = item.getQuantity().add(BigDecimal.ONE);
-            if (newQuantity.compareTo(new BigDecimal(product.getAvailableQuantity())) > 0) {
+            if (newQuantity.compareTo(product.getAvailableQuantity()) > 0) {
                 showAlert("Insufficient Stock",
-                        String.format("Only %d items available in stock", product.getAvailableQuantity()));
+                        String.format("Only %s items available in stock",
+                                product.getAvailableQuantity().stripTrailingZeros().toPlainString()));
                 return;
             }
             item.setQuantity(newQuantity);

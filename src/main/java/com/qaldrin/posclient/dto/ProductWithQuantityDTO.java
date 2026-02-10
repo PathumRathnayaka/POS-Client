@@ -17,7 +17,7 @@ public class ProductWithQuantityDTO {
 
     // Map both "quantity" and "availableQuantity" from backend
     @SerializedName(value = "availableQuantity", alternate = { "quantity" })
-    private Integer availableQuantity;
+    private BigDecimal availableQuantity;
 
     private String unitType;
 
@@ -26,7 +26,7 @@ public class ProductWithQuantityDTO {
     }
 
     public ProductWithQuantityDTO(Long id, String name, String barcode, String category,
-            BigDecimal buyPrice, BigDecimal salePrice, Integer availableQuantity) {
+            BigDecimal buyPrice, BigDecimal salePrice, BigDecimal availableQuantity) {
         this.id = id;
         this.name = name;
         this.barcode = barcode;
@@ -85,11 +85,11 @@ public class ProductWithQuantityDTO {
         this.salePrice = salePrice;
     }
 
-    public Integer getAvailableQuantity() {
+    public BigDecimal getAvailableQuantity() {
         return availableQuantity;
     }
 
-    public void setAvailableQuantity(Integer availableQuantity) {
+    public void setAvailableQuantity(BigDecimal availableQuantity) {
         this.availableQuantity = availableQuantity;
     }
 
@@ -104,6 +104,6 @@ public class ProductWithQuantityDTO {
     @Override
     public String toString() {
         return name + " (" + category + ") - $" + salePrice + " [Stock: " +
-                (availableQuantity != null ? availableQuantity : 0) + "]";
+                (availableQuantity != null ? availableQuantity.stripTrailingZeros().toPlainString() : "0") + "]";
     }
 }
