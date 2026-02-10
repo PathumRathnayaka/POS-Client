@@ -3,6 +3,7 @@ package com.qaldrin.posclient.controller;
 import com.jfoenix.controls.JFXButton;
 import com.qaldrin.posclient.dto.CustomerDTO;
 import com.qaldrin.posclient.model.PausedSaleData;
+import com.qaldrin.posclient.model.SaleItem;
 import com.qaldrin.posclient.service.SaleDataService;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -32,20 +33,30 @@ public class DashboardFormController implements Initializable {
     public Button pauseCustomer;
     public Button quickSale;
     public JFXButton paymentButton;
-    @FXML private AnchorPane primaryScene;
-    @FXML private AnchorPane navigationPane;
-    @FXML private Label connectionStatusLabel;
-    @FXML private Label notificationlabel;
+    @FXML
+    private AnchorPane primaryScene;
+    @FXML
+    private AnchorPane navigationPane;
+    @FXML
+    private Label connectionStatusLabel;
+    @FXML
+    private Label notificationlabel;
 
     private DashboardContentController dashboardContentController;
 
     // Navigation buttons
-    @FXML private Button dashboardButton;
-    @FXML private Button productButton;
-    @FXML private Button settingButton;
-    @FXML private Button deleteButton;
-    @FXML private Button quantityButton;
-    @FXML private Button syncDatabaseButton;
+    @FXML
+    private Button dashboardButton;
+    @FXML
+    private Button productButton;
+    @FXML
+    private Button settingButton;
+    @FXML
+    private Button deleteButton;
+    @FXML
+    private Button quantityButton;
+    @FXML
+    private Button syncDatabaseButton;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -87,7 +98,6 @@ public class DashboardFormController implements Initializable {
 
         loadDashboardContent();
 
-
         updatePauseResumeButton();
 
         System.out.println("Dashboard reloaded - ready for new sale");
@@ -101,9 +111,7 @@ public class DashboardFormController implements Initializable {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             AnchorPane content = loader.load();
 
-
             primaryScene.getChildren().clear();
-
 
             primaryScene.getChildren().add(content);
             AnchorPane.setTopAnchor(content, 0.0);
@@ -154,7 +162,65 @@ public class DashboardFormController implements Initializable {
     @FXML
     private void onQuantityButtonClick() {
         System.out.println("Quantity clicked");
-        showAlert(Alert.AlertType.INFORMATION, "Coming Soon", "Quantity modification feature is coming soon!");
+
+        if (dashboardContentController == null) {
+            showAlert(Alert.AlertType.ERROR, "Error", "Dashboard not loaded!");
+            return;
+        }
+
+        // Get selected item from table
+        SaleItem selectedItem = null;
+        try {
+            // Find the TableView in DashboardContentController
+            // We need to access it from the controller
+            selectedItem = dashboardContentController.getSaleItems().isEmpty() ? null :
+            // Attempting to get selection if possible, otherwise we might need a getter
+                    null; // Placeholder for now, I'll add a getter to DashboardContentController
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // BETTER: I'll add a getSelectedItem() to DashboardContentController
+        selectedItem = dashboardContentController.getSelectedItem();
+
+        if (selectedItem == null) {
+            showAlert(Alert.AlertType.WARNING, "No Selection",
+                    "Please select an item in the table to change its quantity.");
+            return;
+        }
+
+        showQuantityDialog(selectedItem);
+    }
+
+    private void showQuantityDialog(SaleItem item) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/qaldrin/posclient/QuantityNumber-from.fxml"));
+            AnchorPane root = loader.load();
+
+            QuantityNumberController controller = loader.getController();
+            controller.setProductName(item.getName());
+            controller.setUnitType(item.getUnitType());
+            controller.setCurrentQuantity(item.getQuantity());
+
+            Stage stage = new Stage();
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.initStyle(StageStyle.UNDECORATED);
+            stage.setScene(new Scene(root));
+
+            controller.setOnCancel(stage::close);
+            controller.setOnQuantityChanged(newQuantity -> {
+                item.setQuantity(newQuantity);
+                dashboardContentController.updateSummaryLabels();
+                stage.close();
+            });
+
+            stage.showAndWait();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to open quantity dialog: " + e.getMessage());
+        }
     }
 
     @FXML
@@ -191,7 +257,8 @@ public class DashboardFormController implements Initializable {
         }
 
         if (dashboardContentController.getSaleItems().isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "No Items", "Please add items to the sale before proceeding to payment!");
+            showAlert(Alert.AlertType.WARNING, "No Items",
+                    "Please add items to the sale before proceeding to payment!");
             return;
         }
 
@@ -208,8 +275,7 @@ public class DashboardFormController implements Initializable {
                 dashboardContentController.getSaleItems(),
                 dashboardContentController.getSubtotal(),
                 dashboardContentController.getTax(),
-                dashboardContentController.getTotal()
-        );
+                dashboardContentController.getTotal());
 
         // Also ensure customer is stored
         SaleDataService.getInstance().setCustomer(tempCustomer);
@@ -233,7 +299,6 @@ public class DashboardFormController implements Initializable {
 
             // Clear existing content
             primaryScene.getChildren().clear();
-
 
             primaryScene.getChildren().add(content);
             AnchorPane.setTopAnchor(content, 0.0);
@@ -269,7 +334,6 @@ public class DashboardFormController implements Initializable {
 
             // Center the popup on screen
             popupStage.centerOnScreen();
-
 
             try {
                 URL cssUrl = getClass().getResource("/styles/main.css");
@@ -335,13 +399,11 @@ public class DashboardFormController implements Initializable {
             return;
         }
 
-
         SaleDataService.getInstance().setSaleData(
                 dashboardContentController.getSaleItems(),
                 dashboardContentController.getSubtotal(),
                 dashboardContentController.getTax(),
-                dashboardContentController.getTotal()
-        );
+                dashboardContentController.getTotal());
 
         // ✅ Pause the sale
         SaleDataService.getInstance().pauseCurrentSale();
@@ -354,9 +416,10 @@ public class DashboardFormController implements Initializable {
 
         showAlert(Alert.AlertType.INFORMATION, "Sale Paused",
                 String.format("Sale for customer %s has been paused.\n\n" +
-                                "You can now start a new sale. Click 'Resume Sale' to continue this sale later.",
+                        "You can now start a new sale. Click 'Resume Sale' to continue this sale later.",
                         tempCustomer.getContact()));
     }
+
     private void resumePausedSale() {
         List<PausedSaleData> pausedSales = SaleDataService.getInstance().getPausedSales();
 
@@ -373,20 +436,16 @@ public class DashboardFormController implements Initializable {
             return;
         }
 
-
         // ✅ Multiple paused sales - Show selection dialog
         ChoiceDialog<PausedSaleData> dialog = new ChoiceDialog<>(
-                pausedSales.get(0), pausedSales
-        );
+                pausedSales.get(0), pausedSales);
 
         dialog.setTitle("Resume Paused Sale");
         dialog.setHeaderText("Select a paused sale to resume:");
         dialog.setContentText("Paused Sales:");
 
         // ✅ Format the display text for each paused sale
-        dialog.getItems().forEach(sale ->
-                System.out.println("Available: " + sale.getDisplayText())
-        );
+        dialog.getItems().forEach(sale -> System.out.println("Available: " + sale.getDisplayText()));
 
         Optional<PausedSaleData> result = dialog.showAndWait();
 
@@ -397,9 +456,7 @@ public class DashboardFormController implements Initializable {
 
         SaleDataService.getInstance().resumePausedSale(selectedSale);
 
-
         loadDashboardContentWithResumedSale(selectedSale);
-
 
         updatePauseResumeButton();
 
@@ -408,7 +465,8 @@ public class DashboardFormController implements Initializable {
     }
 
     private void updatePauseResumeButton() {
-        if (pauseCustomer == null) return;
+        if (pauseCustomer == null)
+            return;
 
         List<PausedSaleData> pausedSales = SaleDataService.getInstance().getPausedSales();
 
@@ -426,15 +484,12 @@ public class DashboardFormController implements Initializable {
     private void loadDashboardContentWithResumedSale(PausedSaleData resumedSale) {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/qaldrin/posclient/Dashboard-content.fxml")
-            );
+                    getClass().getResource("/com/qaldrin/posclient/Dashboard-content.fxml"));
             AnchorPane content = loader.load();
 
             dashboardContentController = loader.getController();
 
-
             dashboardContentController.getSaleItems().addAll(resumedSale.getSaleItems());
-
 
             primaryScene.getChildren().clear();
             primaryScene.getChildren().add(content);
@@ -460,12 +515,10 @@ public class DashboardFormController implements Initializable {
             return;
         }
 
-
         if (dashboardContentController.getSaleItems().isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "No Items", "Please add items before processing Quick Sale!");
             return;
         }
-
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         String timestamp = LocalDateTime.now().format(formatter);
@@ -473,25 +526,20 @@ public class DashboardFormController implements Initializable {
 
         System.out.println("Generated Quick Sale ID: " + quickSaleId);
 
-
         CustomerDTO walkInCustomer = new CustomerDTO();
         walkInCustomer.setContact("WALK-IN");
         walkInCustomer.setEmail("");
-
 
         AddCustomerFormController.setTempCustomerDTO(walkInCustomer, quickSaleId);
 
         System.out.println("Walk-in customer stored with Sale ID: " + quickSaleId);
 
-
         SaleDataService.getInstance().setSaleData(
                 dashboardContentController.getSaleItems(),
                 dashboardContentController.getSubtotal(),
                 dashboardContentController.getTax(),
-                dashboardContentController.getTotal()
-        );
+                dashboardContentController.getTotal());
         SaleDataService.getInstance().setCustomer(walkInCustomer);
-
 
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/qaldrin/posclient/Payment-form.fxml"));

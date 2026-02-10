@@ -16,14 +16,17 @@ public class ProductWithQuantityDTO {
     private BigDecimal salePrice;
 
     // Map both "quantity" and "availableQuantity" from backend
-    @SerializedName(value = "availableQuantity", alternate = {"quantity"})
+    @SerializedName(value = "availableQuantity", alternate = { "quantity" })
     private Integer availableQuantity;
 
+    private String unitType;
+
     // Constructors
-    public ProductWithQuantityDTO() {}
+    public ProductWithQuantityDTO() {
+    }
 
     public ProductWithQuantityDTO(Long id, String name, String barcode, String category,
-                                  BigDecimal buyPrice, BigDecimal salePrice, Integer availableQuantity) {
+            BigDecimal buyPrice, BigDecimal salePrice, Integer availableQuantity) {
         this.id = id;
         this.name = name;
         this.barcode = barcode;
@@ -88,6 +91,14 @@ public class ProductWithQuantityDTO {
 
     public void setAvailableQuantity(Integer availableQuantity) {
         this.availableQuantity = availableQuantity;
+    }
+
+    public String getUnitType() {
+        return unitType;
+    }
+
+    public void setUnitType(String unitType) {
+        this.unitType = unitType;
     }
 
     @Override

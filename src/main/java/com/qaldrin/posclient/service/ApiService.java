@@ -65,7 +65,8 @@ public class ApiService {
             }
 
             String responseBody = response.body().string();
-            Type listType = new TypeToken<List<ProductWithQuantityDTO>>(){}.getType();
+            Type listType = new TypeToken<List<ProductWithQuantityDTO>>() {
+            }.getType();
             return gson.fromJson(responseBody, listType);
         }
     }
@@ -90,7 +91,8 @@ public class ApiService {
             }
 
             String responseBody = response.body().string();
-            Type listType = new TypeToken<List<ProductWithQuantityDTO>>(){}.getType();
+            Type listType = new TypeToken<List<ProductWithQuantityDTO>>() {
+            }.getType();
             return gson.fromJson(responseBody, listType);
         }
     }
@@ -172,7 +174,8 @@ public class ApiService {
             }
 
             String responseBody = response.body().string();
-            Type listType = new TypeToken<List<CustomerDTO>>(){}.getType();
+            Type listType = new TypeToken<List<CustomerDTO>>() {
+            }.getType();
             return gson.fromJson(responseBody, listType);
         }
     }
@@ -201,8 +204,7 @@ public class ApiService {
             String responseBody = response.body().string();
             System.out.println("Payment response: " + responseBody);
 
-            PaymentResponseDTO paymentResponse =
-                gson.fromJson(responseBody, PaymentResponseDTO.class);
+            PaymentResponseDTO paymentResponse = gson.fromJson(responseBody, PaymentResponseDTO.class);
 
             return paymentResponse != null && paymentResponse.isSuccess();
         }
@@ -237,13 +239,13 @@ public class ApiService {
      */
     public static class StockUpdateItem {
         private Long productId;
-        private Integer quantity;
+        private BigDecimal quantity;
 
         // Add default constructor
         public StockUpdateItem() {
         }
 
-        public StockUpdateItem(Long productId, Integer quantity) {
+        public StockUpdateItem(Long productId, BigDecimal quantity) {
             this.productId = productId;
             this.quantity = quantity;
         }
@@ -257,11 +259,11 @@ public class ApiService {
             this.productId = productId;
         }
 
-        public Integer getQuantity() {
+        public BigDecimal getQuantity() {
             return quantity;
         }
 
-        public void setQuantity(Integer quantity) {
+        public void setQuantity(BigDecimal quantity) {
             this.quantity = quantity;
         }
 
@@ -270,6 +272,7 @@ public class ApiService {
             return "StockUpdateItem{productId=" + productId + ", quantity=" + quantity + '}';
         }
     }
+
     public WalletDTO getWalletByContact(String contact) throws IOException {
         String url = ApiConfig.getWalletByContactUrl(contact);
         Request request = new Request.Builder()
@@ -449,6 +452,5 @@ public class ApiService {
             this.amount = amount;
         }
     }
-
 
 }

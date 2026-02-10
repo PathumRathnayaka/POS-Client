@@ -4,12 +4,12 @@ import java.math.BigDecimal;
 
 public class SaleItemDTO {
     private Long productId;
-    private String name;           // Server uses "name", not "productName"
+    private String name; // Server uses "name", not "productName"
     private String category;
     private String barcode;
-    private Integer quantity;
-    private BigDecimal salePrice;  // Server uses "salePrice", not "unitPrice"
-    private BigDecimal amount;     // Server uses "amount", not "totalPrice" or "subTotal"
+    private BigDecimal quantity;
+    private BigDecimal salePrice; // Server uses "salePrice", not "unitPrice"
+    private BigDecimal amount; // Server uses "amount", not "totalPrice" or "subTotal"
 
     // Getters and Setters
     public Long getProductId() {
@@ -44,11 +44,11 @@ public class SaleItemDTO {
         this.barcode = barcode;
     }
 
-    public Integer getQuantity() {
+    public BigDecimal getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(Integer quantity) {
+    public void setQuantity(BigDecimal quantity) {
         this.quantity = quantity;
     }
 

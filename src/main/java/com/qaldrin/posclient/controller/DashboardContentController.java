@@ -18,19 +18,31 @@ import java.util.ResourceBundle;
 
 public class DashboardContentController implements Initializable {
 
-    @FXML private TableView<SaleItem> saleTable;
-    @FXML private TableColumn<SaleItem, Long> colId;
-    @FXML private TableColumn<SaleItem, String> colName;
-    @FXML private TableColumn<SaleItem, String> colCategory;
-    @FXML private TableColumn<SaleItem, BigDecimal> colSalePrice;
-    @FXML private TableColumn<SaleItem, Integer> colQuantity;
-    @FXML private TableColumn<SaleItem, BigDecimal> colAmount;
+    @FXML
+    private TableView<SaleItem> saleTable;
+    @FXML
+    private TableColumn<SaleItem, Long> colId;
+    @FXML
+    private TableColumn<SaleItem, String> colName;
+    @FXML
+    private TableColumn<SaleItem, String> colCategory;
+    @FXML
+    private TableColumn<SaleItem, BigDecimal> colSalePrice;
+    @FXML
+    private TableColumn<SaleItem, BigDecimal> colQuantity;
+    @FXML
+    private TableColumn<SaleItem, BigDecimal> colAmount;
 
-    @FXML private TextField searchField;
-    @FXML private ListView<ProductWithQuantityDTO> searchDropdown;
-    @FXML private Label subtotalLabel;
-    @FXML private Label taxLabel;
-    @FXML private Label totalLabel;
+    @FXML
+    private TextField searchField;
+    @FXML
+    private ListView<ProductWithQuantityDTO> searchDropdown;
+    @FXML
+    private Label subtotalLabel;
+    @FXML
+    private Label taxLabel;
+    @FXML
+    private Label totalLabel;
 
     private final ApiService apiService = new ApiService();
     private final ObservableList<SaleItem> saleItems = FXCollections.observableArrayList();
@@ -50,7 +62,7 @@ public class DashboardContentController implements Initializable {
         colName.setCellValueFactory(cellData -> cellData.getValue().nameProperty());
         colCategory.setCellValueFactory(cellData -> cellData.getValue().categoryProperty());
         colSalePrice.setCellValueFactory(cellData -> cellData.getValue().salePriceProperty());
-        colQuantity.setCellValueFactory(cellData -> cellData.getValue().quantityProperty().asObject());
+        colQuantity.setCellValueFactory(cellData -> cellData.getValue().quantityProperty());
         colAmount.setCellValueFactory(cellData -> cellData.getValue().amountProperty());
 
         colId.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: white;");
@@ -60,35 +72,35 @@ public class DashboardContentController implements Initializable {
         colQuantity.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: white;");
         colAmount.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: white;");
 
-        colQuantity.setCellFactory(column -> new TableCell<SaleItem, Integer>() {
+        colQuantity.setCellFactory(column -> new TableCell<SaleItem, BigDecimal>() {
             @Override
-            protected void updateItem(Integer item, boolean empty) {
+            protected void updateItem(BigDecimal item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText(null);
                     setGraphic(null);
                 } else {
                     SaleItem saleItem = getTableView().getItems().get(getIndex());
-                    TextField quantityField = new TextField(item.toString());
+                    TextField quantityField = new TextField(item.stripTrailingZeros().toPlainString());
                     quantityField.setPrefWidth(60);
                     quantityField.textProperty().addListener((obs, oldVal, newVal) -> {
-                        if (!newVal.matches("\\d*")) {
+                        if (!newVal.matches("\\d*(\\.\\d*)?")) {
                             quantityField.setText(oldVal);
                         }
                     });
                     quantityField.setOnAction(e -> {
                         try {
-                            int newQuantity = Integer.parseInt(quantityField.getText());
-                            if (newQuantity > 0) {
+                            BigDecimal newQuantity = new BigDecimal(quantityField.getText());
+                            if (newQuantity.compareTo(BigDecimal.ZERO) > 0) {
                                 saleItem.setQuantity(newQuantity);
                                 updateSummaryLabels();
                             } else {
                                 showAlert("Invalid Quantity", "Quantity must be greater than 0");
-                                quantityField.setText(item.toString());
+                                quantityField.setText(item.stripTrailingZeros().toPlainString());
                             }
                         } catch (NumberFormatException ex) {
                             showAlert("Invalid Input", "Please enter a valid number");
-                            quantityField.setText(item.toString());
+                            quantityField.setText(item.stripTrailingZeros().toPlainString());
                         }
                     });
                     setGraphic(quantityField);
@@ -134,8 +146,7 @@ public class DashboardContentController implements Initializable {
                         product.getName(),
                         product.getCategory(),
                         product.getSalePrice(),
-                        product.getAvailableQuantity()
-                ));
+                        product.getAvailableQuantity()));
 
                 // Fix invisible items issue (important)
                 setPrefHeight(40);
@@ -145,8 +156,7 @@ public class DashboardContentController implements Initializable {
                         "-fx-text-fill: #ecf0f1;" +
                                 "-fx-font-size: 14px;" +
                                 "-fx-padding: 8;" +
-                                "-fx-background-color: #1f2a35;"
-                );
+                                "-fx-background-color: #1f2a35;");
             }
         });
 
@@ -193,8 +203,8 @@ public class DashboardContentController implements Initializable {
 
         if (existingItem.isPresent()) {
             SaleItem item = existingItem.get();
-            int newQuantity = item.getQuantity() + 1;
-            if (newQuantity > product.getAvailableQuantity()) {
+            BigDecimal newQuantity = item.getQuantity().add(BigDecimal.ONE);
+            if (newQuantity.compareTo(new BigDecimal(product.getAvailableQuantity())) > 0) {
                 showAlert("Insufficient Stock",
                         String.format("Only %d items available in stock", product.getAvailableQuantity()));
                 return;
@@ -207,8 +217,8 @@ public class DashboardContentController implements Initializable {
                     product.getCategory(),
                     product.getBarcode(),
                     product.getSalePrice(),
-                    1
-            );
+                    BigDecimal.ONE,
+                    product.getUnitType());
             saleItems.add(newItem);
         }
 
@@ -216,7 +226,7 @@ public class DashboardContentController implements Initializable {
         updateSummaryLabels();
     }
 
-    private void updateSummaryLabels() {
+    public void updateSummaryLabels() {
         BigDecimal subtotal = saleItems.stream()
                 .map(SaleItem::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -247,6 +257,9 @@ public class DashboardContentController implements Initializable {
         return getSubtotal().add(getTax());
     }
 
+    public SaleItem getSelectedItem() {
+        return saleTable.getSelectionModel().getSelectedItem();
+    }
 
     public void removeSelectedItem() {
         SaleItem selectedItem = saleTable.getSelectionModel().getSelectedItem();
