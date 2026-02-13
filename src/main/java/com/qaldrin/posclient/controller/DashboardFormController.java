@@ -68,39 +68,33 @@ public class DashboardFormController implements Initializable {
     /**
      * Load Dashboard-content.fxml into primaryScene
      */
-    private void loadDashboardContent() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/qaldrin/posclient/Dashboard-content.fxml"));
-            AnchorPane content = loader.load();
-
-            dashboardContentController = loader.getController();
-
-            primaryScene.getChildren().clear();
-            primaryScene.getChildren().add(content);
-            AnchorPane.setTopAnchor(content, 0.0);
-            AnchorPane.setBottomAnchor(content, 0.0);
-            AnchorPane.setLeftAnchor(content, 0.0);
-            AnchorPane.setRightAnchor(content, 0.0);
-
-            System.out.println("Successfully loaded Dashboard-content.fxml");
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("Error loading Dashboard content");
-        }
-    }
 
     public void loadDashboardContentAfterPayment() {
         System.out.println("Reloading dashboard after payment completion...");
 
-        if (dashboardContentController != null) {
-            dashboardContentController.clearSale();
-        }
+        // Remove the clearing logic so we can check if we need to restore or clear
+        // based on payment status
+        // But wait, this method is called when:
+        // 1. Payment is CANCELLED -> We want to KEEP data
+        // 2. Payment is SUCCESS -> We want to CLEAR data (handled in
+        // PaymentFormController before calling this?)
+        // Let's look at PaymentFormController.onDone:
+        // -> Payment processed = true
+        // -> Clears SaleDataService
+        // -> Calls loadDashboardContentAfterPayment()
+        // So if payment was success, SaleDataService is empty.
+        // If payment was cancelled, SaleDataService still has data.
+
+        // So we should NOT clear blindly here.
+        // if (dashboardContentController != null) {
+        // dashboardContentController.clearSale();
+        // }
 
         loadDashboardContent();
 
         updatePauseResumeButton();
 
-        System.out.println("Dashboard reloaded - ready for new sale");
+        System.out.println("Dashboard reloaded");
     }
 
     /**
@@ -125,6 +119,45 @@ public class DashboardFormController implements Initializable {
             e.printStackTrace();
             System.err.println("Error loading content from: " + fxmlPath);
             showAlert(Alert.AlertType.ERROR, "Error", "Failed to load content: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Load Dashboard-content.fxml into primaryScene
+     */
+    private void loadDashboardContent() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/qaldrin/posclient/Dashboard-content.fxml"));
+            AnchorPane content = loader.load();
+
+            dashboardContentController = loader.getController();
+
+            // ✅ RESTORE SALE DATA if exists in SaleDataService
+            restoreSaleDataIfAvailable();
+
+            primaryScene.getChildren().clear();
+            primaryScene.getChildren().add(content);
+            AnchorPane.setTopAnchor(content, 0.0);
+            AnchorPane.setBottomAnchor(content, 0.0);
+            AnchorPane.setLeftAnchor(content, 0.0);
+            AnchorPane.setRightAnchor(content, 0.0);
+
+            System.out.println("Successfully loaded Dashboard-content.fxml");
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Error loading Dashboard content");
+        }
+    }
+
+    private void restoreSaleDataIfAvailable() {
+        if (dashboardContentController == null)
+            return;
+
+        SaleDataService dataService = SaleDataService.getInstance();
+        if (dataService.getCurrentSaleItems() != null && !dataService.getCurrentSaleItems().isEmpty()) {
+            System.out.println("Restoring existing sale data to dashboard...");
+            dashboardContentController.getSaleItems().addAll(dataService.getCurrentSaleItems());
+            dashboardContentController.updateSummaryLabels();
         }
     }
 
