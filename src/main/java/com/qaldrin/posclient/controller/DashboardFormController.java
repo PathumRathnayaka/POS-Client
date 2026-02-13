@@ -397,7 +397,31 @@ public class DashboardFormController implements Initializable {
     }
 
     public void lockOnClick(ActionEvent actionEvent) {
+        try {
+            // Load the Main-form (Lock Screen)
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/qaldrin/posclient/Main-form.fxml"));
+            AnchorPane root = loader.load();
 
+            // Get the current stage
+            Stage stage = (Stage) lockBtn.getScene().getWindow();
+
+            // Create new scene
+            Scene scene = new Scene(root);
+
+            // Set the scene
+            stage.setScene(scene);
+            stage.setTitle("POS Login");
+
+            // Set full screen
+            stage.setFullScreen(true);
+            stage.setFullScreenExitHint(""); // Hide the "Press ESC to exit full screen" message
+
+            System.out.println("Locked screen - Switched to Main-form");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to lock screen: " + e.getMessage());
+        }
     }
 
     @FXML
