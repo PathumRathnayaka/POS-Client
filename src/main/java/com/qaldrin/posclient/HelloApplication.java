@@ -12,15 +12,20 @@ public class HelloApplication extends Application {
     public void start(Stage stage) throws IOException {
         try {
             // Get the resource URL explicitly
-            URL fxmlLocation = HelloApplication.class.getResource("main-form.fxml");
+            URL fxmlLocation = HelloApplication.class.getResource("Main-form.fxml");
             if (fxmlLocation == null) {
-                throw new IOException("Cannot find main-form.fxml in resources. Check file location.");
+                throw new IOException("Cannot find Main-form.fxml in resources. Check file location.");
             }
 
             FXMLLoader fxmlLoader = new FXMLLoader(fxmlLocation);
-            Scene scene = new Scene(fxmlLoader.load(), 800, 600);
+            Scene scene = new Scene(fxmlLoader.load());
             stage.setTitle("POS System Login");
             stage.setScene(scene);
+
+            // Set full screen
+            stage.setFullScreen(true);
+            stage.setFullScreenExitHint("");
+
             stage.show();
         } catch (IOException e) {
             e.printStackTrace();
