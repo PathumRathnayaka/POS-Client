@@ -18,6 +18,7 @@ public class PaymentRequestDTO {
     private BigDecimal paidAmount;
     private BigDecimal changeAmount;
     private String paymentMethod;
+    private String cashierId;
 
     // Getters and Setters
     public String getSaleId() {
@@ -107,7 +108,12 @@ public class PaymentRequestDTO {
     public void setPaymentMethod(String paymentMethod) {
         this.paymentMethod = paymentMethod;
     }
+
+    public String getCashierId() {
+        return cashierId;
+    }
+
+    public void setCashierId(String cashierId) {
+        this.cashierId = cashierId;
+    }
 }
-
-
-

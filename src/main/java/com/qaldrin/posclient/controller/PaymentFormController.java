@@ -485,6 +485,7 @@ public class PaymentFormController implements Initializable {
                     // ✅ Use finalAmountToPay here
                     paymentRequest.setChangeAmount(paidAmount.subtract(finalAmountToPay));
                     paymentRequest.setPaymentMethod(selectedPaymentMethod);
+                    paymentRequest.setCashierId(ApiService.getCurrentCashierId());
 
                     boolean success = apiService.processPayment(paymentRequest);
 

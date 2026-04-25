@@ -26,6 +26,10 @@ public class ApiService {
     private final OkHttpClient client;
     private final Gson gson;
 
+    // Global session state
+    private static String currentCashierId;
+    private static String currentCashierName;
+
     public ApiService() {
         this.client = new OkHttpClient.Builder()
                 .connectTimeout(10, TimeUnit.SECONDS)
@@ -96,12 +100,38 @@ public class ApiService {
 
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
+                currentCashierId = null;
+                currentCashierName = null;
                 return false;
             }
             String responseBody = response.body().string();
             JsonObject jsonObj = gson.fromJson(responseBody, JsonObject.class);
-            return jsonObj.has("valid") && jsonObj.get("valid").getAsBoolean();
+            boolean valid = jsonObj.has("valid") && jsonObj.get("valid").getAsBoolean();
+
+            if (valid) {
+                if (jsonObj.has("userId") && !jsonObj.get("userId").isJsonNull()) {
+                    currentCashierId = jsonObj.get("userId").getAsString();
+                }
+                if (jsonObj.has("cashierName") && !jsonObj.get("cashierName").isJsonNull()) {
+                    currentCashierName = jsonObj.get("cashierName").getAsString();
+                }
+                System.out.println(
+                        "Login successful for cashier: " + currentCashierName + " (ID: " + currentCashierId + ")");
+            } else {
+                currentCashierId = null;
+                currentCashierName = null;
+            }
+
+            return valid;
         }
+    }
+
+    public static String getCurrentCashierId() {
+        return currentCashierId;
+    }
+
+    public static String getCurrentCashierName() {
+        return currentCashierName;
     }
 
     // =========================================================================
