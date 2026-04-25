@@ -10,9 +10,16 @@ import okhttp3.*;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializer;
 
 /**
  * Service class for making REST API calls to the POS Server.
@@ -36,7 +43,22 @@ public class ApiService {
                 .readTimeout(30, TimeUnit.SECONDS)
                 .writeTimeout(30, TimeUnit.SECONDS)
                 .build();
-        this.gson = new Gson();
+
+        // Configure Gson with adapters for java.time types (fix for Java 17+ / JPMS)
+        this.gson = new GsonBuilder()
+                .registerTypeAdapter(LocalDate.class,
+                        (JsonSerializer<LocalDate>) (src, typeOfSrc,
+                                context) -> new JsonPrimitive(src.format(DateTimeFormatter.ISO_LOCAL_DATE)))
+                .registerTypeAdapter(LocalDate.class,
+                        (JsonDeserializer<LocalDate>) (json, typeOfT, context) -> LocalDate.parse(json.getAsString(),
+                                DateTimeFormatter.ISO_LOCAL_DATE))
+                .registerTypeAdapter(LocalDateTime.class,
+                        (JsonSerializer<LocalDateTime>) (src, typeOfSrc,
+                                context) -> new JsonPrimitive(src.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)))
+                .registerTypeAdapter(LocalDateTime.class,
+                        (JsonDeserializer<LocalDateTime>) (json, typeOfT, context) -> LocalDateTime
+                                .parse(json.getAsString(), DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                .create();
     }
 
     // =========================================================================
@@ -257,6 +279,26 @@ public class ApiService {
             }
             String responseBody = response.body().string();
             Type listType = new TypeToken<List<ProductWithQuantityDTO>>() {
+            }.getType();
+            return gson.fromJson(responseBody, listType);
+        }
+    }
+
+    /**
+     * Get all available batches for aSpecific product AND Brand.
+     * GET /api/products/{productId}/batches?brand=brandName
+     */
+    public List<CurrentStockBatchDTO> getAvailableBatches(String productId, String brand) throws IOException {
+        Request request = new Request.Builder()
+                .url(ApiConfig.getProductBatchesUrl(productId, brand))
+                .get()
+                .build();
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("Failed to fetch batches: " + response.code());
+            }
+            String responseBody = response.body().string();
+            Type listType = new TypeToken<List<CurrentStockBatchDTO>>() {
             }.getType();
             return gson.fromJson(responseBody, listType);
         }

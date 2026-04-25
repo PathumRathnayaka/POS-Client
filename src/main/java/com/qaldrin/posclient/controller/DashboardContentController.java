@@ -15,6 +15,17 @@ import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.io.IOException;
+
+import com.qaldrin.posclient.dto.CurrentStockBatchDTO;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import javafx.scene.Scene;
+import javafx.scene.Parent;
+import javafx.fxml.FXMLLoader;
 
 public class DashboardContentController implements Initializable {
 
@@ -140,13 +151,11 @@ public class DashboardContentController implements Initializable {
                     return;
                 }
 
-                // Text
-                setText(String.format(
-                        "%s  | %s  | $%.2f  | Stock: %s",
-                        product.getName(),
-                        product.getCategory(),
-                        product.getSalePrice(),
-                        product.getAvailableQuantity().stripTrailingZeros().toPlainString()));
+                // Text - Show only Product and Brand as requested
+                String brand = (product.getBrand() != null && !product.getBrand().equalsIgnoreCase("NO BRAND"))
+                        ? product.getBrand()
+                        : "Default";
+                setText(String.format("%s  |  %s", product.getName(), brand));
 
                 // Fix invisible items issue (important)
                 setPrefHeight(40);
@@ -192,34 +201,105 @@ public class DashboardContentController implements Initializable {
     }
 
     private void addProductToSale(ProductWithQuantityDTO product) {
-        if (product.getAvailableQuantity() == null || product.getAvailableQuantity().compareTo(BigDecimal.ZERO) <= 0) {
-            showAlert("Out of Stock", "Product " + product.getName() + " is out of stock!");
+        // Fetch variations in a separate thread to keep UI responsive
+        new Thread(() -> {
+            try {
+                // Fetch batches for this product ID and brand
+                List<CurrentStockBatchDTO> batches = apiService.getAvailableBatches(product.getId(),
+                        product.getBrand());
+
+                Platform.runLater(() -> {
+                    if (batches.isEmpty()) {
+                        showAlert("Out of Stock", "No available batches for " + product.getName());
+                        return;
+                    }
+
+                    // Count unique variations (e.g. "Small", "Large")
+                    Set<String> uniqueVariations = batches.stream()
+                            .map(b -> (b.getVariation() == null || b.getVariation().isEmpty()) ? "DEFAULT"
+                                    : b.getVariation())
+                            .collect(Collectors.toSet());
+
+                    if (uniqueVariations.size() > 1) {
+                        // Multiple variations - show popup
+                        showVariationSelectionDialog(product.getName(), batches);
+                    } else {
+                        // Only one variation - pick the best batch (FIFO)
+                        // Server already returns them sorted by expiry/creation
+                        addBatchToSale(batches.get(0));
+                    }
+                });
+            } catch (IOException e) {
+                Platform.runLater(() -> showAlert("Error", "Failed to fetch variations: " + e.getMessage()));
+            }
+        }).start();
+    }
+
+    private void showVariationSelectionDialog(String productName, List<CurrentStockBatchDTO> batches) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/qaldrin/posclient/ProductVariationSelect-form.fxml"));
+            Parent root = loader.load();
+
+            ProductVariationSelectController controller = loader.getController();
+
+            Stage stage = new Stage();
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.initStyle(StageStyle.UNDECORATED); // Modern look
+            stage.setScene(new Scene(root));
+
+            controller.setData(productName, batches);
+            controller.setOnBatchSelected(selectedBatch -> {
+                addBatchToSale(selectedBatch);
+                stage.close();
+            });
+            controller.setOnCancel(() -> stage.close());
+
+            stage.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("UI Error", "Could not load variation selection dialog.");
+        }
+    }
+
+    private void addBatchToSale(CurrentStockBatchDTO batch) {
+        if (batch.getQuantity() == null || batch.getQuantity().compareTo(BigDecimal.ZERO) <= 0) {
+            showAlert("Out of Stock", "Variation " + batch.getVariation() + " is out of stock!");
             return;
         }
 
+        // Search by Batch ID for exact row match
         Optional<SaleItem> existingItem = saleItems.stream()
-                .filter(item -> item.getId().equals(product.getId()))
+                .filter(item -> item.getBatchId() != null && item.getBatchId().equals(batch.getBatchId()))
                 .findFirst();
 
         if (existingItem.isPresent()) {
             SaleItem item = existingItem.get();
             BigDecimal newQuantity = item.getQuantity().add(BigDecimal.ONE);
-            if (newQuantity.compareTo(product.getAvailableQuantity()) > 0) {
+            if (newQuantity.compareTo(batch.getQuantity()) > 0) {
                 showAlert("Insufficient Stock",
-                        String.format("Only %s items available in stock",
-                                product.getAvailableQuantity().stripTrailingZeros().toPlainString()));
+                        String.format("Only %s items available for this variation",
+                                batch.getQuantity().stripTrailingZeros().toPlainString()));
                 return;
             }
             item.setQuantity(newQuantity);
         } else {
+            // Include variation in name for better visibility in the table
+            String displayName = batch.getName();
+            if (batch.getVariation() != null && !batch.getVariation().isEmpty()
+                    && !batch.getVariation().equalsIgnoreCase("DEFAULT")) {
+                displayName += " (" + batch.getVariation() + ")";
+            }
+
             SaleItem newItem = new SaleItem(
-                    product.getId(),
-                    product.getName(),
-                    product.getCategory(),
-                    product.getBarcode(),
-                    product.getSalePrice(),
+                    batch.getId(), // Still keep Product ID as base ID
+                    displayName,
+                    batch.getCategory(),
+                    batch.getBarcode(),
+                    batch.getSalePrice(),
                     BigDecimal.ONE,
-                    product.getUnitType());
+                    batch.getUnitType(),
+                    batch.getBatchId()); // Pass batchId for uniqueness
             saleItems.add(newItem);
         }
 

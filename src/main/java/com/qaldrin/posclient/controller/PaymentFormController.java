@@ -609,7 +609,10 @@ public class PaymentFormController implements Initializable {
         if (saleItems != null) {
             for (SaleItem item : saleItems) {
                 SaleItemDTO dto = new SaleItemDTO();
-                dto.setProductId(item.getId());
+                // Use batchId if available, otherwise fallback to productId
+                String idToUse = (item.getBatchId() != null && !item.getBatchId().isEmpty()) ? item.getBatchId()
+                        : item.getId();
+                dto.setProductId(idToUse);
                 dto.setProductName(item.getName());
                 dto.setBarcode(item.getBarcode());
                 dto.setQuantity(item.getQuantity());
@@ -627,8 +630,10 @@ public class PaymentFormController implements Initializable {
             try {
                 List<ApiService.StockUpdateItem> stockUpdates = new ArrayList<>();
                 for (SaleItem item : saleItems) {
-                    // item.getId() now returns String, matching the requirement
-                    stockUpdates.add(new ApiService.StockUpdateItem(item.getId(), item.getQuantity()));
+                    // Use batchId for exact stock reduction on server
+                    String idToUse = (item.getBatchId() != null && !item.getBatchId().isEmpty()) ? item.getBatchId()
+                            : item.getId();
+                    stockUpdates.add(new ApiService.StockUpdateItem(idToUse, item.getQuantity()));
                 }
 
                 apiService.updateStock(stockUpdates);

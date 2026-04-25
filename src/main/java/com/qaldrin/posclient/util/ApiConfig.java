@@ -138,6 +138,14 @@ public class ApiConfig {
         return getFullUrl(PRODUCTS_BY_CATEGORY_ENDPOINT) + "/" + encode(category);
     }
 
+    public static String getProductBatchesUrl(String productId, String brand) {
+        String url = getFullUrl(PRODUCTS_ENDPOINT) + "/" + encode(productId) + "/batches";
+        if (brand != null && !brand.isEmpty()) {
+            url += "?brand=" + encode(brand);
+        }
+        return url;
+    }
+
     // --- Customers ---
 
     public static String getCustomersUrl() {

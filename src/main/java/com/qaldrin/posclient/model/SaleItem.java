@@ -15,14 +15,21 @@ public class SaleItem {
     private final ObjectProperty<BigDecimal> amount;
     private final StringProperty barcode;
     private final StringProperty unitType;
+    private final StringProperty batchId;
 
     public SaleItem(String id, String name, String category, String barcode,
             BigDecimal salePrice, BigDecimal quantity, String unitType) {
+        this(id, name, category, barcode, salePrice, quantity, unitType, null);
+    }
+
+    public SaleItem(String id, String name, String category, String barcode,
+            BigDecimal salePrice, BigDecimal quantity, String unitType, String batchId) {
         this.id = new SimpleStringProperty(id);
         this.name = new SimpleStringProperty(name);
         this.category = new SimpleStringProperty(category);
         this.barcode = new SimpleStringProperty(barcode);
         this.unitType = new SimpleStringProperty(unitType);
+        this.batchId = new SimpleStringProperty(batchId);
         this.salePrice = new SimpleObjectProperty<>(salePrice);
         this.quantity = new SimpleObjectProperty<>(quantity);
         this.amount = new SimpleObjectProperty<>(salePrice.multiply(quantity));
@@ -119,6 +126,15 @@ public class SaleItem {
     public void setQuantity(BigDecimal quantity) {
         this.quantity.set(quantity);
         updateAmount();
+    }
+
+    // Batch ID Property
+    public String getBatchId() {
+        return batchId.get();
+    }
+
+    public StringProperty batchIdProperty() {
+        return batchId;
     }
 
     // Amount Property
