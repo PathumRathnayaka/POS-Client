@@ -5,27 +5,36 @@ import java.math.BigDecimal;
 
 /**
  * DTO for Product with Quantity information
- * Matches the backend ProductWithQuantityDTO
+ * Matches the backend ProductWithQuantityDTO exactly.
+ *
+ * Product hierarchy: Product → ProductVariation → ProductQuantityBatch
+ * The 'id' field is the batch ID (String), not a numeric Long.
  */
 public class ProductWithQuantityDTO {
-    private Long id;
+    // Server returns id as String (batch UUID / composite key)
+    private String id;
     private String name;
     private String barcode;
     private String category;
     private BigDecimal buyPrice;
     private BigDecimal salePrice;
+    private BigDecimal discount;
+    private BigDecimal tax;
 
     // Map both "quantity" and "availableQuantity" from backend
-    @SerializedName(value = "availableQuantity", alternate = { "quantity" })
+    @SerializedName(value = "quantity", alternate = { "availableQuantity" })
     private BigDecimal availableQuantity;
 
     private String unitType;
+    private String brand;
+    private String variation;
+    private String searchableBarcodes;
 
     // Constructors
     public ProductWithQuantityDTO() {
     }
 
-    public ProductWithQuantityDTO(Long id, String name, String barcode, String category,
+    public ProductWithQuantityDTO(String id, String name, String barcode, String category,
             BigDecimal buyPrice, BigDecimal salePrice, BigDecimal availableQuantity) {
         this.id = id;
         this.name = name;
@@ -37,11 +46,11 @@ public class ProductWithQuantityDTO {
     }
 
     // Getters and Setters
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -85,6 +94,22 @@ public class ProductWithQuantityDTO {
         this.salePrice = salePrice;
     }
 
+    public BigDecimal getDiscount() {
+        return discount;
+    }
+
+    public void setDiscount(BigDecimal discount) {
+        this.discount = discount;
+    }
+
+    public BigDecimal getTax() {
+        return tax;
+    }
+
+    public void setTax(BigDecimal tax) {
+        this.tax = tax;
+    }
+
     public BigDecimal getAvailableQuantity() {
         return availableQuantity;
     }
@@ -101,9 +126,35 @@ public class ProductWithQuantityDTO {
         this.unitType = unitType;
     }
 
+    public String getBrand() {
+        return brand;
+    }
+
+    public void setBrand(String brand) {
+        this.brand = brand;
+    }
+
+    public String getVariation() {
+        return variation;
+    }
+
+    public void setVariation(String variation) {
+        this.variation = variation;
+    }
+
+    public String getSearchableBarcodes() {
+        return searchableBarcodes;
+    }
+
+    public void setSearchableBarcodes(String searchableBarcodes) {
+        this.searchableBarcodes = searchableBarcodes;
+    }
+
     @Override
     public String toString() {
-        return name + " (" + category + ") - $" + salePrice + " [Stock: " +
-                (availableQuantity != null ? availableQuantity.stripTrailingZeros().toPlainString() : "0") + "]";
+        String qty = availableQuantity != null
+                ? availableQuantity.stripTrailingZeros().toPlainString()
+                : "0";
+        return name + " (" + category + ") - Rs." + salePrice + " [Stock: " + qty + "]";
     }
 }

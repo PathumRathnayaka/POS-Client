@@ -1,12 +1,13 @@
 package com.qaldrin.posclient.dto;
 
 /**
- * DTO for Customer data transfer between client and server
- * ✅ Removed saleId - Customer is identified by contact only
+ * DTO for Customer data transfer between client and server.
+ * The server returns customerId as a String.
  */
 public class CustomerDTO {
 
-    private Long id;
+    // Server returns customerId as String
+    private String id;
     private String contact;
     private String email;
 
@@ -19,18 +20,18 @@ public class CustomerDTO {
         this.email = email;
     }
 
-    public CustomerDTO(Long id, String contact, String email) {
+    public CustomerDTO(String id, String contact, String email) {
         this.id = id;
         this.contact = contact;
         this.email = email;
     }
 
     // Getters and Setters
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

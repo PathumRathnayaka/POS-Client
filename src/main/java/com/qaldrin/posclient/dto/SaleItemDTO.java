@@ -2,21 +2,25 @@ package com.qaldrin.posclient.dto;
 
 import java.math.BigDecimal;
 
+/**
+ * DTO for sale line items sent to the server during payment processing.
+ * productId is a String (batch ID) matching the server's SaleItemDTO.
+ */
 public class SaleItemDTO {
-    private Long productId;
-    private String name; // Server uses "name", not "productName"
+    private String productId; // String – matches server StockUpdateDTO.productId
+    private String name;
     private String category;
     private String barcode;
     private BigDecimal quantity;
-    private BigDecimal salePrice; // Server uses "salePrice", not "unitPrice"
-    private BigDecimal amount; // Server uses "amount", not "totalPrice" or "subTotal"
+    private BigDecimal salePrice;
+    private BigDecimal amount;
 
     // Getters and Setters
-    public Long getProductId() {
+    public String getProductId() {
         return productId;
     }
 
-    public void setProductId(Long productId) {
+    public void setProductId(String productId) {
         this.productId = productId;
     }
 
@@ -68,45 +72,44 @@ public class SaleItemDTO {
         this.amount = amount;
     }
 
-    // Compatibility methods (optional - for backward compatibility)
+    // Compatibility aliases
     public String getProductName() {
         return name;
     }
 
-    public void setProductName(String productName) {
-        this.name = productName;
+    public void setProductName(String n) {
+        this.name = n;
     }
 
     public BigDecimal getUnitPrice() {
         return salePrice;
     }
 
-    public void setUnitPrice(BigDecimal unitPrice) {
-        this.salePrice = unitPrice;
+    public void setUnitPrice(BigDecimal p) {
+        this.salePrice = p;
     }
 
     public BigDecimal getTotalPrice() {
         return amount;
     }
 
-    public void setTotalPrice(BigDecimal totalPrice) {
-        this.amount = totalPrice;
+    public void setTotalPrice(BigDecimal t) {
+        this.amount = t;
     }
 
     public BigDecimal getSubTotal() {
         return amount;
     }
 
-    public void setSubTotal(BigDecimal subTotal) {
-        this.amount = subTotal;
+    public void setSubTotal(BigDecimal s) {
+        this.amount = s;
     }
 
     @Override
     public String toString() {
         return "SaleItemDTO{" +
-                "productId=" + productId +
+                "productId='" + productId + '\'' +
                 ", name='" + name + '\'' +
-                ", category='" + category + '\'' +
                 ", quantity=" + quantity +
                 ", salePrice=" + salePrice +
                 ", amount=" + amount +

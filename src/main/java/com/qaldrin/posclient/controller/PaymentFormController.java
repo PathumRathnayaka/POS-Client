@@ -28,37 +28,55 @@ public class PaymentFormController implements Initializable {
 
     public Label oldBalanceLabel;
 
-    @FXML private Button addwalletBtn;
+    @FXML
+    private Button addwalletBtn;
 
-    @FXML private AnchorPane primaryScene;
-    @FXML private VBox itemsVBox;
-    @FXML private AnchorPane invoiceMessage;
+    @FXML
+    private AnchorPane primaryScene;
+    @FXML
+    private VBox itemsVBox;
+    @FXML
+    private AnchorPane invoiceMessage;
 
-    @FXML private Button cashButton;
-    @FXML private Button cardButton;
-    @FXML private Button checkButton;
+    @FXML
+    private Button cashButton;
+    @FXML
+    private Button cardButton;
+    @FXML
+    private Button checkButton;
 
     private final ApiService apiService = new ApiService();
     private String selectedPaymentMethod = null;
     private boolean paymentProcessed = false;
 
-    @FXML private Label subTotalLabel;
-    @FXML private Label taxLabel;
-    @FXML private Label totalLabel;
-    @FXML private Label paymentTotalLabel;
-    @FXML private Label changeLabel;
+    @FXML
+    private Label subTotalLabel;
+    @FXML
+    private Label taxLabel;
+    @FXML
+    private Label totalLabel;
+    @FXML
+    private Label paymentTotalLabel;
+    @FXML
+    private Label changeLabel;
 
     // Customer Info
-    @FXML private Label saleIdLabel;
-    @FXML private Label customerContactLabel;
+    @FXML
+    private Label saleIdLabel;
+    @FXML
+    private Label customerContactLabel;
 
     // Input Fields
-    @FXML private TextField paidTextField;
+    @FXML
+    private TextField paidTextField;
 
     // Invoice Buttons
-    @FXML private Button printInvoiceButton;
-    @FXML private Button emailInvoiceButton;
-    @FXML private Button pdfInvoiceButton;
+    @FXML
+    private Button printInvoiceButton;
+    @FXML
+    private Button emailInvoiceButton;
+    @FXML
+    private Button pdfInvoiceButton;
 
     private BigDecimal walletBalance = BigDecimal.ZERO;
     private BigDecimal walletBalanceUsed = BigDecimal.ZERO;
@@ -68,7 +86,6 @@ public class PaymentFormController implements Initializable {
 
     private BigDecimal pendingWalletAddition = BigDecimal.ZERO;
     private boolean walletAdditionPending = false;
-
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -212,14 +229,16 @@ public class PaymentFormController implements Initializable {
                         if (oldBalanceLabel != null) {
                             oldBalanceLabel.setText(String.format("Wallet Balance: Rs. %.2f (Applied)",
                                     balance.doubleValue()));
-                            oldBalanceLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #27ae60; -fx-font-weight: bold;");
+                            oldBalanceLabel
+                                    .setStyle("-fx-font-size: 14px; -fx-text-fill: #27ae60; -fx-font-weight: bold;");
                             oldBalanceLabel.setVisible(true);
                             oldBalanceLabel.setManaged(true);
                         }
 
                         // ✅ CRITICAL: Show reduced total (after wallet deduction)
                         if (paymentTotalLabel != null) {
-                            paymentTotalLabel.setText(String.format("Total: Rs. %.2f", finalReducedTotal.doubleValue()));
+                            paymentTotalLabel
+                                    .setText(String.format("Total: Rs. %.2f", finalReducedTotal.doubleValue()));
                         }
 
                         if (addwalletBtn != null) {
@@ -284,9 +303,7 @@ public class PaymentFormController implements Initializable {
         System.out.println("Wallet UI disabled for Walk-in (Quick Sale).");
     }
 
-
     private void displaySaleItems(ObservableList<SaleItem> saleItems) {
-
 
         if (itemsVBox == null) {
             System.err.println("itemsVBox is null!");
@@ -324,7 +341,8 @@ public class PaymentFormController implements Initializable {
     }
 
     private void setupPaidTextFieldListener() {
-        if (paidTextField == null) return;
+        if (paidTextField == null)
+            return;
 
         paidTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (!newValue.matches("\\d*\\.?\\d*")) {
@@ -514,10 +532,12 @@ public class PaymentFormController implements Initializable {
 
                             // ✅ Use finalAmountToPay here too
                             BigDecimal change = paidAmount.subtract(finalAmountToPay);
-                            if (change.compareTo(BigDecimal.ZERO) < 0) change = BigDecimal.ZERO;
+                            if (change.compareTo(BigDecimal.ZERO) < 0)
+                                change = BigDecimal.ZERO;
 
                             if (walletAdditionPending && pendingWalletAddition.compareTo(BigDecimal.ZERO) > 0) {
-                                message.append(String.format("Change Added to Wallet: Rs. %.2f\n", pendingWalletAddition));
+                                message.append(
+                                        String.format("Change Added to Wallet: Rs. %.2f\n", pendingWalletAddition));
                             } else {
                                 message.append(String.format("Change: Rs. %.2f\n", change));
                             }
@@ -536,7 +556,8 @@ public class PaymentFormController implements Initializable {
 
                             if (addwalletBtn != null) {
                                 addwalletBtn.setText("Add to Wallet");
-                                addwalletBtn.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;");
+                                addwalletBtn.setStyle(
+                                        "-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;");
                                 addwalletBtn.setDisable(false);
                             }
 
@@ -557,7 +578,8 @@ public class PaymentFormController implements Initializable {
                                 invoiceMessage.setVisible(false);
                                 invoiceMessage.setManaged(false);
                             }
-                            showAlert(Alert.AlertType.ERROR, "Payment Failed", "Failed to process payment. Please try again.");
+                            showAlert(Alert.AlertType.ERROR, "Payment Failed",
+                                    "Failed to process payment. Please try again.");
                         });
                     }
 
@@ -576,7 +598,8 @@ public class PaymentFormController implements Initializable {
 
         } catch (NumberFormatException e) {
             showAlert(Alert.AlertType.ERROR, "Invalid Amount", "Please enter a valid number");
-        }    }
+        }
+    }
 
     private List<SaleItemDTO> toSaleItemDTOList() {
         List<SaleItemDTO> saleItemDTOs = new ArrayList<>();
@@ -598,26 +621,24 @@ public class PaymentFormController implements Initializable {
         return saleItemDTOs;
     }
 
-
-
     private void updateStockAfterPayment(ObservableList<SaleItem> saleItems) {
         new Thread(() -> {
             try {
                 List<ApiService.StockUpdateItem> stockUpdates = new ArrayList<>();
                 for (SaleItem item : saleItems) {
+                    // item.getId() now returns String, matching the requirement
                     stockUpdates.add(new ApiService.StockUpdateItem(item.getId(), item.getQuantity()));
                 }
 
                 apiService.updateStock(stockUpdates);
-                System.out.println("Stock updated successfully");
+                System.out.println("Stock updated successfully for " + stockUpdates.size() + " items");
 
             } catch (Exception e) {
                 System.err.println("Stock update error: " + e.getMessage());
+                e.printStackTrace();
             }
         }).start();
     }
-
-
 
     @FXML
     public void addwalletOnClick(ActionEvent actionEvent) {
@@ -629,7 +650,8 @@ public class PaymentFormController implements Initializable {
             }
 
             if ("WALK-IN".equalsIgnoreCase(tempCustomer.getContact())) {
-                showAlert(Alert.AlertType.INFORMATION, "Not Available", "Wallet feature is not available for walk-in customers.");
+                showAlert(Alert.AlertType.INFORMATION, "Not Available",
+                        "Wallet feature is not available for walk-in customers.");
                 return;
             }
 
@@ -675,7 +697,8 @@ public class PaymentFormController implements Initializable {
                         if (walletBalance.compareTo(BigDecimal.ZERO) > 0) {
                             oldBalanceLabel.setText(String.format("Wallet Balance: Rs. %.2f (Applied)",
                                     walletBalance.doubleValue()));
-                            oldBalanceLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #27ae60; -fx-font-weight: bold;");
+                            oldBalanceLabel
+                                    .setStyle("-fx-font-size: 14px; -fx-text-fill: #27ae60; -fx-font-weight: bold;");
                         } else {
                             oldBalanceLabel.setText("Wallet Balance: Rs. 0.00");
                             oldBalanceLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #7f8c8d;");
@@ -685,7 +708,8 @@ public class PaymentFormController implements Initializable {
                     // Change button back to GREEN
                     if (addwalletBtn != null) {
                         addwalletBtn.setText("Add to Wallet");
-                        addwalletBtn.setStyle("-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;");
+                        addwalletBtn.setStyle(
+                                "-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;");
                     }
 
                     // Show actual change amount (customer gets cash)
@@ -713,7 +737,8 @@ public class PaymentFormController implements Initializable {
                     // Change button to BLUE
                     if (addwalletBtn != null) {
                         addwalletBtn.setText("Undo Wallet");
-                        addwalletBtn.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;");
+                        addwalletBtn.setStyle(
+                                "-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;");
                     }
 
                     // Show Rs. 0.00 (no cash change for customer)
@@ -732,13 +757,17 @@ public class PaymentFormController implements Initializable {
             showAlert(Alert.AlertType.ERROR, "Error", "Failed to handle Add Wallet: " + e.getMessage());
         }
     }
+
     public void selectPaymentMethod(String method) {
         selectedPaymentMethod = method;
         System.out.println("Payment method selected: " + method);
 
-        if (cashButton != null) cashButton.setStyle("");
-        if (cardButton != null) cardButton.setStyle("");
-        if (checkButton != null) checkButton.setStyle("");
+        if (cashButton != null)
+            cashButton.setStyle("");
+        if (cardButton != null)
+            cardButton.setStyle("");
+        if (checkButton != null)
+            checkButton.setStyle("");
 
         String selectedStyle = "-fx-background-color: #25D366; -fx-text-fill: white; -fx-font-weight: bold;";
         String normalStyle = "-fx-background-color: #34495e; -fx-text-fill: white;";

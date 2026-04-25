@@ -3,8 +3,8 @@ package com.qaldrin.posclient.util;
 import java.util.prefs.Preferences;
 
 /**
- * API Configuration for connecting to backend server
- * Change BASE_URL to match your server's IP address in the local network
+ * API Configuration for connecting to the POS Server.
+ * Change the IP/port via the Settings form on the cashier PC.
  */
 public class ApiConfig {
 
@@ -14,47 +14,63 @@ public class ApiConfig {
     private static final String DEFAULT_IP = "localhost";
     private static final String DEFAULT_PORT = "8080";
 
-    // Base URL - will be loaded from preferences or use default
+    // Base URL - loaded from preferences or default
     private static String BASE_URL;
 
-    // Static initializer to load saved settings
+    // Static initializer
     static {
         loadSavedSettings();
     }
 
-    // API Endpoints
+    // -------------------------------------------------------------------------
+    // Endpoint constants (match POS Server REST controllers exactly)
+    // -------------------------------------------------------------------------
+
+    // Products
     public static final String PRODUCTS_ENDPOINT = "/api/products";
     public static final String PRODUCTS_SEARCH_ENDPOINT = "/api/products/search";
+    public static final String PRODUCTS_BARCODE_ENDPOINT = "/api/products/barcode";
+    public static final String PRODUCTS_CATEGORIES_ENDPOINT = "/api/products/categories";
+    public static final String PRODUCTS_BY_CATEGORY_ENDPOINT = "/api/products/category";
+
+    // Customers
     public static final String CUSTOMERS_ENDPOINT = "/api/customers";
-    public static final String CUSTOMER_BY_SALE_ID_ENDPOINT = "/api/customers/sale-id";
+    public static final String CUSTOMER_BY_CONTACT_ENDPOINT = "/api/customers/contact";
+
+    // Payments
     public static final String PAYMENTS_ENDPOINT = "/api/payments/process";
+
+    // Stock
     public static final String STOCK_UPDATE_ENDPOINT = "/api/stock/update";
+
+    // Wallet
     public static final String WALLET_BY_CONTACT_ENDPOINT = "/api/wallets/contact";
     public static final String WALLET_BALANCE_ENDPOINT = "/api/wallets/balance";
     public static final String WALLET_ADD_ENDPOINT = "/api/wallets/add";
     public static final String WALLET_DEDUCT_ENDPOINT = "/api/wallets/deduct";
     public static final String WALLET_EXISTS_ENDPOINT = "/api/wallets/exists";
 
-    /**
-     * Load saved settings from preferences
-     */
+    // Password / PIN
+    public static final String PIN_HAS_PIN_ENDPOINT = "/api/password/has-pin";
+    public static final String PIN_VALIDATE_ENDPOINT = "/api/password/validate";
+
+    // -------------------------------------------------------------------------
+    // Settings helpers
+    // -------------------------------------------------------------------------
+
     private static void loadSavedSettings() {
         try {
             Preferences prefs = Preferences.userNodeForPackage(ApiConfig.class);
-            prefs.clear(); // <-- add this line just once to reset saved values
-
             String savedIp = prefs.get(PREF_IP_ADDRESS, DEFAULT_IP);
             String savedPort = prefs.get(PREF_PORT, DEFAULT_PORT);
             BASE_URL = "http://" + savedIp + ":" + savedPort;
             System.out.println("ApiConfig loaded: " + BASE_URL);
         } catch (Exception e) {
+            BASE_URL = "http://" + DEFAULT_IP + ":" + DEFAULT_PORT;
             System.err.println("Error loading preferences: " + e.getMessage());
         }
     }
 
-    /**
-     * Save settings to preferences
-     */
     private static void saveSettings(String ip, String port) {
         Preferences prefs = Preferences.userNodeForPackage(ApiConfig.class);
         prefs.put(PREF_IP_ADDRESS, ip);
@@ -62,9 +78,6 @@ public class ApiConfig {
         System.out.println("ApiConfig saved: " + ip + ":" + port);
     }
 
-    /**
-     * Get the base URL for API calls
-     */
     public static String getBaseUrl() {
         if (BASE_URL == null || BASE_URL.isEmpty()) {
             loadSavedSettings();
@@ -73,112 +86,124 @@ public class ApiConfig {
     }
 
     /**
-     * Set the base URL (useful for configuration)
-     * Also extracts and saves IP and port to preferences
+     * Set the base URL (called from Settings form).
+     * Parses and persists IP + port automatically.
      */
     public static void setBaseUrl(String url) {
         BASE_URL = url;
-
-        // Extract IP and port from URL and save to preferences
         try {
-            // Remove http:// or https://
             String cleanUrl = url.replaceFirst("^https?://", "");
-
-            // Split by colon to get IP and port
             String[] parts = cleanUrl.split(":");
             if (parts.length == 2) {
-                String ip = parts[0];
-                String port = parts[1];
-                saveSettings(ip, port);
+                saveSettings(parts[0], parts[1]);
             }
         } catch (Exception e) {
             System.err.println("Error parsing URL for saving: " + e.getMessage());
         }
-
         System.out.println("ApiConfig updated to: " + BASE_URL);
     }
 
-    /**
-     * Get full URL for an endpoint
-     */
     public static String getFullUrl(String endpoint) {
         return getBaseUrl() + endpoint;
     }
 
-    /**
-     * Get products URL
-     */
+    // -------------------------------------------------------------------------
+    // URL builders
+    // -------------------------------------------------------------------------
+
+    // --- Products ---
+
     public static String getProductsUrl() {
         return getFullUrl(PRODUCTS_ENDPOINT);
     }
 
-    /**
-     * Get products search URL
-     */
     public static String getProductsSearchUrl(String query, int limit) {
-        return getFullUrl(PRODUCTS_SEARCH_ENDPOINT) + "?query=" + query + "&limit=" + limit;
+        return getFullUrl(PRODUCTS_SEARCH_ENDPOINT)
+                + "?query=" + encode(query) + "&limit=" + limit;
     }
 
-    /**
-     * Get customers URL
-     */
+    public static String getProductByIdUrl(String id) {
+        return getFullUrl(PRODUCTS_ENDPOINT) + "/" + encode(id);
+    }
+
+    public static String getProductByBarcodeUrl(String barcode) {
+        return getFullUrl(PRODUCTS_BARCODE_ENDPOINT) + "/" + encode(barcode);
+    }
+
+    public static String getProductsCategoriesUrl() {
+        return getFullUrl(PRODUCTS_CATEGORIES_ENDPOINT);
+    }
+
+    public static String getProductsByCategoryUrl(String category) {
+        return getFullUrl(PRODUCTS_BY_CATEGORY_ENDPOINT) + "/" + encode(category);
+    }
+
+    // --- Customers ---
+
     public static String getCustomersUrl() {
         return getFullUrl(CUSTOMERS_ENDPOINT);
     }
 
-    /**
-     * Get customer by sale ID URL
-     */
-    public static String getCustomerBySaleIdUrl(String saleId) {
-        return getFullUrl(CUSTOMER_BY_SALE_ID_ENDPOINT) + "/" + saleId;
+    public static String getCustomerByContactUrl(String contact) {
+        return getFullUrl(CUSTOMER_BY_CONTACT_ENDPOINT) + "/" + encode(contact);
     }
 
-    /**
-     * Get payments URL
-     */
+    // --- Payments ---
+
     public static String getPaymentsUrl() {
         return getFullUrl(PAYMENTS_ENDPOINT);
     }
 
-    /**
-     * Get stock update URL
-     */
+    // --- Stock ---
+
     public static String getStockUpdateUrl() {
         return getFullUrl(STOCK_UPDATE_ENDPOINT);
     }
 
-    /**
-     * Get wallet by contact URL
-     */
+    // --- Wallet ---
+
     public static String getWalletByContactUrl(String contact) {
-        return getFullUrl(WALLET_BY_CONTACT_ENDPOINT) + "/" + contact;
+        return getFullUrl(WALLET_BY_CONTACT_ENDPOINT) + "/" + encode(contact);
     }
 
-    /**
-     * Get wallet balance URL
-     */
     public static String getWalletBalanceUrl(String contact) {
-        return getFullUrl(WALLET_BALANCE_ENDPOINT) + "/" + contact;
+        return getFullUrl(WALLET_BALANCE_ENDPOINT) + "/" + encode(contact);
     }
 
-    /**
-     * Get wallet add URL
-     */
     public static String getWalletAddUrl() {
         return getFullUrl(WALLET_ADD_ENDPOINT);
     }
 
-    /**
-     * Get wallet deduct URL
-     */
     public static String getWalletDeductUrl() {
         return getFullUrl(WALLET_DEDUCT_ENDPOINT);
     }
 
-    /**
-     * Get wallet exists URL
-     */
-    public static String getWalletExistsUrl(Long customerId) {
-        return getFullUrl(WALLET_EXISTS_ENDPOINT) + "/" + customerId;
+    public static String getWalletExistsUrl(String customerId) {
+        return getFullUrl(WALLET_EXISTS_ENDPOINT) + "/" + encode(customerId);
+    }
+
+    // --- PIN / Password ---
+
+    public static String getPinHasPinUrl() {
+        return getFullUrl(PIN_HAS_PIN_ENDPOINT);
+    }
+
+    public static String getPinValidateUrl() {
+        return getFullUrl(PIN_VALIDATE_ENDPOINT);
+    }
+
+    // -------------------------------------------------------------------------
+    // Utility
+    // -------------------------------------------------------------------------
+
+    /** Simple URL-encode for path segments. */
+    private static String encode(String value) {
+        if (value == null)
+            return "";
+        try {
+            return java.net.URLEncoder.encode(value, "UTF-8").replace("+", "%20");
+        } catch (java.io.UnsupportedEncodingException e) {
+            return value;
+        }
     }
 }

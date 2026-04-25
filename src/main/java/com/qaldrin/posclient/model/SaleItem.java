@@ -7,7 +7,7 @@ import java.math.BigDecimal;
  * Model class for Sale Item displayed in TableView
  */
 public class SaleItem {
-    private final LongProperty id;
+    private final StringProperty id;
     private final StringProperty name;
     private final StringProperty category;
     private final ObjectProperty<BigDecimal> salePrice;
@@ -16,9 +16,9 @@ public class SaleItem {
     private final StringProperty barcode;
     private final StringProperty unitType;
 
-    public SaleItem(Long id, String name, String category, String barcode,
+    public SaleItem(String id, String name, String category, String barcode,
             BigDecimal salePrice, BigDecimal quantity, String unitType) {
-        this.id = new SimpleLongProperty(id);
+        this.id = new SimpleStringProperty(id);
         this.name = new SimpleStringProperty(name);
         this.category = new SimpleStringProperty(category);
         this.barcode = new SimpleStringProperty(barcode);
@@ -29,15 +29,15 @@ public class SaleItem {
     }
 
     // ID Property
-    public Long getId() {
+    public String getId() {
         return id.get();
     }
 
-    public LongProperty idProperty() {
+    public StringProperty idProperty() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id.set(id);
     }
 

@@ -21,7 +21,7 @@ public class DashboardContentController implements Initializable {
     @FXML
     private TableView<SaleItem> saleTable;
     @FXML
-    private TableColumn<SaleItem, Long> colId;
+    private TableColumn<SaleItem, String> colId;
     @FXML
     private TableColumn<SaleItem, String> colName;
     @FXML
@@ -58,7 +58,7 @@ public class DashboardContentController implements Initializable {
     }
 
     private void initializeTableColumns() {
-        colId.setCellValueFactory(cellData -> cellData.getValue().idProperty().asObject());
+        colId.setCellValueFactory(cellData -> cellData.getValue().idProperty());
         colName.setCellValueFactory(cellData -> cellData.getValue().nameProperty());
         colCategory.setCellValueFactory(cellData -> cellData.getValue().categoryProperty());
         colSalePrice.setCellValueFactory(cellData -> cellData.getValue().salePriceProperty());

@@ -1,6 +1,7 @@
 package com.qaldrin.posclient.service;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import com.qaldrin.posclient.dto.*;
 import com.qaldrin.posclient.util.ApiConfig;
@@ -14,7 +15,10 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Service class for making REST API calls to the backend server
+ * Service class for making REST API calls to the POS Server.
+ *
+ * All IDs (product batch id, customer id, stock product id) are Strings
+ * to match the server's data model.
  */
 public class ApiService {
 
@@ -31,16 +35,17 @@ public class ApiService {
         this.gson = new Gson();
     }
 
-    /**
-     * Test connection to server
-     */
+    // =========================================================================
+    // Connection
+    // =========================================================================
+
+    /** Test connection to server. */
     public boolean testConnection() {
         try {
             Request request = new Request.Builder()
                     .url(ApiConfig.getProductsUrl())
                     .get()
                     .build();
-
             try (Response response = client.newCall(request).execute()) {
                 return response.isSuccessful();
             }
@@ -50,20 +55,72 @@ public class ApiService {
         }
     }
 
+    // =========================================================================
+    // PIN / Password
+    // =========================================================================
+
     /**
-     * Get all products from server
+     * Check whether an admin/cashier PIN has been set on the server.
+     * GET /api/password/has-pin
+     */
+    public boolean hasPin() throws IOException {
+        Request request = new Request.Builder()
+                .url(ApiConfig.getPinHasPinUrl())
+                .get()
+                .build();
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                return false;
+            }
+            String body = response.body().string();
+            JsonObject json = gson.fromJson(body, JsonObject.class);
+            return json.has("hasPin") && json.get("hasPin").getAsBoolean();
+        }
+    }
+
+    /**
+     * Validate a PIN entered by the cashier.
+     * POST /api/password/validate
+     *
+     * @return true if PIN is valid (or no PIN is set)
+     */
+    public boolean validatePin(String pin) throws IOException {
+        PinRequestDTO requestDTO = new PinRequestDTO(pin);
+        String json = gson.toJson(requestDTO);
+        RequestBody body = RequestBody.create(json, JSON);
+
+        Request request = new Request.Builder()
+                .url(ApiConfig.getPinValidateUrl())
+                .post(body)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                return false;
+            }
+            String responseBody = response.body().string();
+            JsonObject jsonObj = gson.fromJson(responseBody, JsonObject.class);
+            return jsonObj.has("valid") && jsonObj.get("valid").getAsBoolean();
+        }
+    }
+
+    // =========================================================================
+    // Products
+    // =========================================================================
+
+    /**
+     * Get all products from server.
+     * GET /api/products
      */
     public List<ProductWithQuantityDTO> getAllProducts() throws IOException {
         Request request = new Request.Builder()
                 .url(ApiConfig.getProductsUrl())
                 .get()
                 .build();
-
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                throw new IOException("Failed to fetch products: " + response);
+                throw new IOException("Failed to fetch products: " + response.code());
             }
-
             String responseBody = response.body().string();
             Type listType = new TypeToken<List<ProductWithQuantityDTO>>() {
             }.getType();
@@ -72,24 +129,22 @@ public class ApiService {
     }
 
     /**
-     * Search products by query
+     * Search products by name, barcode or searchableBarcodes.
+     * GET /api/products/search?query=&limit=
      */
     public List<ProductWithQuantityDTO> searchProducts(String query, int limit) throws IOException {
         if (query == null || query.trim().isEmpty()) {
             return new ArrayList<>();
         }
-
         String url = ApiConfig.getProductsSearchUrl(query, limit);
         Request request = new Request.Builder()
                 .url(url)
                 .get()
                 .build();
-
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                throw new IOException("Failed to search products: " + response);
+                throw new IOException("Failed to search products: " + response.code());
             }
-
             String responseBody = response.body().string();
             Type listType = new TypeToken<List<ProductWithQuantityDTO>>() {
             }.getType();
@@ -98,7 +153,93 @@ public class ApiService {
     }
 
     /**
-     * Save customer to server
+     * Get a single product (batch) by its ID.
+     * GET /api/products/{id}
+     */
+    public ProductWithQuantityDTO getProductById(String id) throws IOException {
+        Request request = new Request.Builder()
+                .url(ApiConfig.getProductByIdUrl(id))
+                .get()
+                .build();
+        try (Response response = client.newCall(request).execute()) {
+            if (response.code() == 404)
+                return null;
+            if (!response.isSuccessful()) {
+                throw new IOException("Failed to fetch product by id: " + response.code());
+            }
+            String responseBody = response.body().string();
+            return gson.fromJson(responseBody, ProductWithQuantityDTO.class);
+        }
+    }
+
+    /**
+     * Look up a product by barcode (exact match on primary or searchable barcodes).
+     * GET /api/products/barcode/{barcode}
+     */
+    public ProductWithQuantityDTO getProductByBarcode(String barcode) throws IOException {
+        Request request = new Request.Builder()
+                .url(ApiConfig.getProductByBarcodeUrl(barcode))
+                .get()
+                .build();
+        try (Response response = client.newCall(request).execute()) {
+            if (response.code() == 404)
+                return null;
+            if (!response.isSuccessful()) {
+                throw new IOException("Failed to fetch product by barcode: " + response.code());
+            }
+            String responseBody = response.body().string();
+            return gson.fromJson(responseBody, ProductWithQuantityDTO.class);
+        }
+    }
+
+    /**
+     * Get all unique product categories.
+     * GET /api/products/categories
+     */
+    public List<String> getCategories() throws IOException {
+        Request request = new Request.Builder()
+                .url(ApiConfig.getProductsCategoriesUrl())
+                .get()
+                .build();
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("Failed to fetch categories: " + response.code());
+            }
+            String responseBody = response.body().string();
+            Type listType = new TypeToken<List<String>>() {
+            }.getType();
+            return gson.fromJson(responseBody, listType);
+        }
+    }
+
+    /**
+     * Get all products in a specific category.
+     * GET /api/products/category/{category}
+     */
+    public List<ProductWithQuantityDTO> getProductsByCategory(String category) throws IOException {
+        Request request = new Request.Builder()
+                .url(ApiConfig.getProductsByCategoryUrl(category))
+                .get()
+                .build();
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("Failed to fetch products by category: " + response.code());
+            }
+            String responseBody = response.body().string();
+            Type listType = new TypeToken<List<ProductWithQuantityDTO>>() {
+            }.getType();
+            return gson.fromJson(responseBody, listType);
+        }
+    }
+
+    // =========================================================================
+    // Customers
+    // =========================================================================
+
+    /**
+     * Save (get-or-create) customer on server.
+     * POST /api/customers
+     * Server returns CustomerResponseDTO with customerId as String.
      */
     public CustomerDTO saveCustomer(CustomerDTO customer) throws IOException {
         String json = gson.toJson(customer);
@@ -112,67 +253,78 @@ public class ApiService {
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
                 String errorBody = response.body() != null ? response.body().string() : "Unknown error";
-                System.err.println("Failed to save customer: " + errorBody);
                 throw new IOException("Failed to save customer: " + response.code() + " - " + errorBody);
             }
-
             String responseBody = response.body().string();
             System.out.println("Customer response: " + responseBody);
 
-            // ✅ Parse the response - backend returns CustomerResponseDTO
-            // Extract customer ID, contact, email
-            com.google.gson.JsonObject jsonResponse = gson.fromJson(responseBody, com.google.gson.JsonObject.class);
+            // Parse server's CustomerResponseDTO { success, message, customerId, contact,
+            // email }
+            JsonObject jsonResponse = gson.fromJson(responseBody, JsonObject.class);
 
             CustomerDTO savedCustomer = new CustomerDTO();
-            savedCustomer.setId(jsonResponse.get("customerId").getAsLong());
-            savedCustomer.setContact(jsonResponse.get("contact").getAsString());
-
+            // customerId is a String on the server side
+            if (jsonResponse.has("customerId") && !jsonResponse.get("customerId").isJsonNull()) {
+                savedCustomer.setId(jsonResponse.get("customerId").getAsString());
+            }
+            if (jsonResponse.has("contact") && !jsonResponse.get("contact").isJsonNull()) {
+                savedCustomer.setContact(jsonResponse.get("contact").getAsString());
+            }
             if (jsonResponse.has("email") && !jsonResponse.get("email").isJsonNull()) {
                 savedCustomer.setEmail(jsonResponse.get("email").getAsString());
             }
 
-            System.out.println("Customer processed successfully - ID: " + savedCustomer.getId());
+            System.out.println("Customer processed - ID: " + savedCustomer.getId());
             return savedCustomer;
         }
     }
 
     /**
-     * Get customer by sale ID
+     * Find customer by contact number.
+     * GET /api/customers/contact/{contact}
+     * Returns null if not found.
      */
-    public CustomerDTO getCustomerBySaleId(String saleId) throws IOException {
-        String url = ApiConfig.getCustomerBySaleIdUrl(saleId);
+    public CustomerDTO getCustomerByContact(String contact) throws IOException {
         Request request = new Request.Builder()
-                .url(url)
+                .url(ApiConfig.getCustomerByContactUrl(contact))
                 .get()
                 .build();
-
         try (Response response = client.newCall(request).execute()) {
+            if (response.code() == 404)
+                return null;
             if (!response.isSuccessful()) {
-                if (response.code() == 404) {
-                    return null; // Customer not found
-                }
-                throw new IOException("Failed to fetch customer: " + response);
+                throw new IOException("Failed to fetch customer: " + response.code());
             }
-
             String responseBody = response.body().string();
-            return gson.fromJson(responseBody, CustomerDTO.class);
+            JsonObject jsonResponse = gson.fromJson(responseBody, JsonObject.class);
+
+            CustomerDTO dto = new CustomerDTO();
+            if (jsonResponse.has("customerId") && !jsonResponse.get("customerId").isJsonNull()) {
+                dto.setId(jsonResponse.get("customerId").getAsString());
+            }
+            if (jsonResponse.has("contact") && !jsonResponse.get("contact").isJsonNull()) {
+                dto.setContact(jsonResponse.get("contact").getAsString());
+            }
+            if (jsonResponse.has("email") && !jsonResponse.get("email").isJsonNull()) {
+                dto.setEmail(jsonResponse.get("email").getAsString());
+            }
+            return dto;
         }
     }
 
     /**
-     * Get all customers
+     * Get all customers.
+     * GET /api/customers
      */
     public List<CustomerDTO> getAllCustomers() throws IOException {
         Request request = new Request.Builder()
                 .url(ApiConfig.getCustomersUrl())
                 .get()
                 .build();
-
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                throw new IOException("Failed to fetch customers: " + response);
+                throw new IOException("Failed to fetch customers: " + response.code());
             }
-
             String responseBody = response.body().string();
             Type listType = new TypeToken<List<CustomerDTO>>() {
             }.getType();
@@ -180,13 +332,17 @@ public class ApiService {
         }
     }
 
+    // =========================================================================
+    // Payments
+    // =========================================================================
+
     /**
-     * Process payment
+     * Process payment.
+     * POST /api/payments/process
      */
     public boolean processPayment(PaymentRequestDTO paymentRequest) throws IOException {
         String json = gson.toJson(paymentRequest);
         System.out.println("Sending payment request: " + json);
-
         RequestBody body = RequestBody.create(json, JSON);
 
         Request request = new Request.Builder()
@@ -200,18 +356,22 @@ public class ApiService {
                 System.err.println("Payment failed: " + errorBody);
                 throw new IOException("Failed to process payment: " + response.code() + " - " + errorBody);
             }
-
             String responseBody = response.body().string();
             System.out.println("Payment response: " + responseBody);
-
             PaymentResponseDTO paymentResponse = gson.fromJson(responseBody, PaymentResponseDTO.class);
-
             return paymentResponse != null && paymentResponse.isSuccess();
         }
     }
 
+    // =========================================================================
+    // Stock
+    // =========================================================================
+
     /**
-     * Update stock after sale
+     * Update (reduce) stock after a sale.
+     * POST /api/stock/update
+     *
+     * Uses String productId to match server's StockUpdateDTO.
      */
     public boolean updateStock(List<StockUpdateItem> stockUpdates) throws IOException {
         String json = gson.toJson(stockUpdates);
@@ -228,34 +388,32 @@ public class ApiService {
                 System.err.println("Stock update failed: " + errorBody);
                 throw new IOException("Failed to update stock: " + response.code());
             }
-
             System.out.println("Stock updated successfully");
             return true;
         }
     }
 
     /**
-     * Inner class for stock update
+     * Item used in stock update requests.
+     * productId is a String matching server's StockUpdateDTO.
      */
     public static class StockUpdateItem {
-        private Long productId;
+        private String productId;
         private BigDecimal quantity;
 
-        // Add default constructor
         public StockUpdateItem() {
         }
 
-        public StockUpdateItem(Long productId, BigDecimal quantity) {
+        public StockUpdateItem(String productId, BigDecimal quantity) {
             this.productId = productId;
             this.quantity = quantity;
         }
 
-        // Add proper getters and setters
-        public Long getProductId() {
+        public String getProductId() {
             return productId;
         }
 
-        public void setProductId(Long productId) {
+        public void setProductId(String productId) {
             this.productId = productId;
         }
 
@@ -269,67 +427,48 @@ public class ApiService {
 
         @Override
         public String toString() {
-            return "StockUpdateItem{productId=" + productId + ", quantity=" + quantity + '}';
+            return "StockUpdateItem{productId='" + productId + "', quantity=" + quantity + '}';
         }
     }
+
+    // =========================================================================
+    // Wallet
+    // =========================================================================
 
     public WalletDTO getWalletByContact(String contact) throws IOException {
-        String url = ApiConfig.getWalletByContactUrl(contact);
         Request request = new Request.Builder()
-                .url(url)
+                .url(ApiConfig.getWalletByContactUrl(contact))
                 .get()
                 .build();
-
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                if (response.code() == 404) {
-                    return null; // Wallet not found
-                }
-                throw new IOException("Failed to fetch wallet: " + response);
+                if (response.code() == 404)
+                    return null;
+                throw new IOException("Failed to fetch wallet: " + response.code());
             }
-
             String responseBody = response.body().string();
             WalletResponseDTO walletResponse = gson.fromJson(responseBody, WalletResponseDTO.class);
-
-            // Convert to WalletDTO
-            WalletDTO walletDTO = new WalletDTO();
-            walletDTO.setSuccess(walletResponse.isSuccess());
-            walletDTO.setMessage(walletResponse.getMessage());
-            walletDTO.setCustomerContact(walletResponse.getCustomerContact());
-            walletDTO.setBalance(walletResponse.getBalance());
-            walletDTO.setLastUpdated(walletResponse.getLastUpdated());
-
-            return walletDTO;
+            return toWalletDTO(walletResponse);
         }
     }
 
-    /**
-     * Get wallet balance for a customer
-     */
     public BigDecimal getWalletBalance(String contact) throws IOException {
-        String url = ApiConfig.getWalletBalanceUrl(contact);
         Request request = new Request.Builder()
-                .url(url)
+                .url(ApiConfig.getWalletBalanceUrl(contact))
                 .get()
                 .build();
-
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                if (response.code() == 404) {
-                    return BigDecimal.ZERO; // No wallet found
-                }
-                throw new IOException("Failed to fetch wallet balance: " + response);
+                if (response.code() == 404)
+                    return BigDecimal.ZERO;
+                throw new IOException("Failed to fetch wallet balance: " + response.code());
             }
-
             String responseBody = response.body().string();
             WalletBalanceDTO walletDTO = gson.fromJson(responseBody, WalletBalanceDTO.class);
             return walletDTO.getBalance() != null ? walletDTO.getBalance() : BigDecimal.ZERO;
         }
     }
 
-    /**
-     * Add amount to customer wallet
-     */
     public WalletDTO addToWallet(String customerContact, BigDecimal amount) throws IOException {
         WalletTransactionDTO transactionDTO = new WalletTransactionDTO(customerContact, amount);
         String json = gson.toJson(transactionDTO);
@@ -343,31 +482,15 @@ public class ApiService {
         try (Response response = client.newCall(httpRequest).execute()) {
             if (!response.isSuccessful()) {
                 String errorBody = response.body() != null ? response.body().string() : "Unknown error";
-                System.err.println("Add to wallet failed: " + errorBody);
                 throw new IOException("Failed to add to wallet: " + response.code() + " - " + errorBody);
             }
-
             String responseBody = response.body().string();
             System.out.println("Add to wallet response: " + responseBody);
-
-            // Parse the response to WalletResponseDTO first
             WalletResponseDTO walletResponse = gson.fromJson(responseBody, WalletResponseDTO.class);
-
-            // Convert to WalletDTO for compatibility
-            WalletDTO walletDTO = new WalletDTO();
-            walletDTO.setSuccess(walletResponse.isSuccess());
-            walletDTO.setMessage(walletResponse.getMessage());
-            walletDTO.setCustomerContact(walletResponse.getCustomerContact());
-            walletDTO.setBalance(walletResponse.getBalance());
-            walletDTO.setLastUpdated(walletResponse.getLastUpdated());
-
-            return walletDTO;
+            return toWalletDTO(walletResponse);
         }
     }
 
-    /**
-     * Deduct amount from customer wallet
-     */
     public WalletDTO deductFromWallet(String customerContact, BigDecimal amount) throws IOException {
         WalletTransactionDTO transactionDTO = new WalletTransactionDTO(customerContact, amount);
         String json = gson.toJson(transactionDTO);
@@ -381,76 +504,45 @@ public class ApiService {
         try (Response response = client.newCall(httpRequest).execute()) {
             if (!response.isSuccessful()) {
                 String errorBody = response.body() != null ? response.body().string() : "Unknown error";
-                System.err.println("Deduct from wallet failed: " + errorBody);
                 throw new IOException("Failed to deduct from wallet: " + response.code() + " - " + errorBody);
             }
-
             String responseBody = response.body().string();
             System.out.println("Deduct from wallet response: " + responseBody);
-
-            // Parse the response to WalletResponseDTO first
             WalletResponseDTO walletResponse = gson.fromJson(responseBody, WalletResponseDTO.class);
-
-            // Convert to WalletDTO for compatibility
-            WalletDTO walletDTO = new WalletDTO();
-            walletDTO.setSuccess(walletResponse.isSuccess());
-            walletDTO.setMessage(walletResponse.getMessage());
-            walletDTO.setCustomerContact(walletResponse.getCustomerContact());
-            walletDTO.setBalance(walletResponse.getBalance());
-            walletDTO.setLastUpdated(walletResponse.getLastUpdated());
-
-            return walletDTO;
+            return toWalletDTO(walletResponse);
         }
     }
 
     /**
-     * Check if customer has a wallet
+     * Check if customer has a wallet.
+     * GET /api/wallets/exists/{customerId}
+     * customerId is a String on the server.
      */
-    public boolean checkWalletExists(Long customerId) throws IOException {
-        String url = ApiConfig.getWalletExistsUrl(customerId);
+    public boolean checkWalletExists(String customerId) throws IOException {
         Request request = new Request.Builder()
-                .url(url)
+                .url(ApiConfig.getWalletExistsUrl(customerId))
                 .get()
                 .build();
-
         try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
+            if (!response.isSuccessful())
                 return false;
-            }
-
             String responseBody = response.body().string();
             WalletExistsDTO walletDTO = gson.fromJson(responseBody, WalletExistsDTO.class);
             return walletDTO.isExists();
         }
     }
 
-    /**
-     * Inner class for wallet transaction requests
-     */
-    public static class WalletTransactionRequest {
-        private String customerContact;
-        private BigDecimal amount;
+    // =========================================================================
+    // Helpers
+    // =========================================================================
 
-        public WalletTransactionRequest(String customerContact, BigDecimal amount) {
-            this.customerContact = customerContact;
-            this.amount = amount;
-        }
-
-        public String getCustomerContact() {
-            return customerContact;
-        }
-
-        public void setCustomerContact(String customerContact) {
-            this.customerContact = customerContact;
-        }
-
-        public BigDecimal getAmount() {
-            return amount;
-        }
-
-        public void setAmount(BigDecimal amount) {
-            this.amount = amount;
-        }
+    private WalletDTO toWalletDTO(WalletResponseDTO walletResponse) {
+        WalletDTO walletDTO = new WalletDTO();
+        walletDTO.setSuccess(walletResponse.isSuccess());
+        walletDTO.setMessage(walletResponse.getMessage());
+        walletDTO.setCustomerContact(walletResponse.getCustomerContact());
+        walletDTO.setBalance(walletResponse.getBalance());
+        walletDTO.setLastUpdated(walletResponse.getLastUpdated());
+        return walletDTO;
     }
-
 }
