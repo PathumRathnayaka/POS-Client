@@ -6,7 +6,7 @@ import java.math.BigDecimal;
  * Wallet DTO for client-server communication
  */
 public class WalletDTO {
-    private Long walletId;
+    private String walletId;
     private String customerContact;
     private BigDecimal balance;
     private String lastUpdated;
@@ -15,7 +15,8 @@ public class WalletDTO {
     private Boolean walletExists;
 
     // Constructors
-    public WalletDTO() {}
+    public WalletDTO() {
+    }
 
     public WalletDTO(String customerContact, BigDecimal balance) {
         this.customerContact = customerContact;
@@ -23,11 +24,11 @@ public class WalletDTO {
     }
 
     // Getters and Setters
-    public Long getWalletId() {
+    public String getWalletId() {
         return walletId;
     }
 
-    public void setWalletId(Long walletId) {
+    public void setWalletId(String walletId) {
         this.walletId = walletId;
     }
 
