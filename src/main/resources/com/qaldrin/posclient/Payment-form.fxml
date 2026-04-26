@@ -147,13 +147,7 @@
                 <VBox layoutX="510" layoutY="175" spacing="10">
                     <children>
 
-                        <Button fx:id="printInvoiceButton" text="Print Invoice"
-                                onAction="#onPrintInvoice" prefWidth="160" prefHeight="40"
-                                style="-fx-background-color: #34495e; -fx-text-fill: white; -fx-background-radius: 8;" />
-
-                        <Button fx:id="emailInvoiceButton" text="Email Invoice"
-                                onAction="#onEmailInvoice" prefWidth="160" prefHeight="40"
-                                style="-fx-background-color: #34495e; -fx-text-fill: white; -fx-background-radius: 8;" />
+                        <Button fx:id="emailInvoiceButton" onAction="#onEmailInvoice" prefHeight="40" prefWidth="160" style="-fx-background-color: #34495e; -fx-text-fill: white; -fx-background-radius: 8;" text="Email Invoice" />
 
                         <Button fx:id="pdfInvoiceButton" text="PDF Invoice"
                                 onAction="#onPdfInvoice" prefWidth="160" prefHeight="40"

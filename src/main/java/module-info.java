@@ -1,6 +1,6 @@
 module com.qaldrin.posclient {
-    requires javafx.controls;
-    requires javafx.fxml;
+    requires transitive javafx.controls;
+    requires transitive javafx.fxml;
     requires okhttp3;
     requires com.google.gson;
     requires com.jfoenix;
@@ -10,6 +10,7 @@ module com.qaldrin.posclient {
 
     exports com.qaldrin.posclient;
     exports com.qaldrin.posclient.controller;
+    exports com.qaldrin.posclient.model;
 
     opens com.qaldrin.posclient.controller to javafx.fxml;
 
@@ -17,4 +18,6 @@ module com.qaldrin.posclient {
 
     opens com.qaldrin.posclient.dto to com.google.gson;
     opens com.qaldrin.posclient.service to com.google.gson;
+
+    exports com.qaldrin.posclient.util;
 }

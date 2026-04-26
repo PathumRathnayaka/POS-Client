@@ -5,6 +5,7 @@ import com.qaldrin.posclient.dto.*;
 import com.qaldrin.posclient.model.SaleItem;
 import com.qaldrin.posclient.service.ApiService;
 import com.qaldrin.posclient.service.SaleDataService;
+import com.qaldrin.posclient.util.ReceiptsUtil;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -393,17 +394,54 @@ public class PaymentFormController implements Initializable {
 
     @FXML
     private void onPrintInvoice() {
-        // TODO: Implement invoice printing
+        printInvoiceAction();
     }
 
     @FXML
     private void onEmailInvoice() {
         // TODO: Implement invoice emailing
+        showAlert(Alert.AlertType.INFORMATION, "Email Invoice", "Emailing feature coming soon!");
     }
 
     @FXML
     private void onPdfInvoice() {
-        // TODO: Implement PDF invoice generation
+        // For thermal POS, Save as PDF is usually handled by the system printer dialog
+        // or a similar mechanism. We'll trigger the same print logic.
+        printInvoiceAction();
+    }
+
+    private void printInvoiceAction() {
+        try {
+            CustomerDTO customer = AddCustomerFormController.getTempCustomerDTO();
+            String saleId = AddCustomerFormController.getTempSaleId();
+            ObservableList<SaleItem> saleItems = SaleDataService.getInstance().getCurrentSaleItems();
+            BigDecimal total = SaleDataService.getInstance().getTotal();
+
+            if (saleId == null || saleItems == null || saleItems.isEmpty()) {
+                showAlert(Alert.AlertType.WARNING, "No Data", "No sale data available to print.");
+                return;
+            }
+
+            // Calculate paid and change for the receipt
+            String paidText = paidTextField.getText().trim();
+            BigDecimal paidAmount = paidText.isEmpty() ? total : new BigDecimal(paidText);
+
+            // AmountToPay considering wallet
+            BigDecimal amountToPay = total.subtract(walletBalanceUsed);
+            if (amountToPay.compareTo(BigDecimal.ZERO) < 0)
+                amountToPay = BigDecimal.ZERO;
+
+            BigDecimal change = paidAmount.subtract(amountToPay);
+            if (change.compareTo(BigDecimal.ZERO) < 0)
+                change = BigDecimal.ZERO;
+
+            ReceiptsUtil.printReceipt(saleId, customer, saleItems, total, paidAmount, change);
+
+        } catch (Exception e) {
+            System.err.println("Error printing invoice: " + e.getMessage());
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Print Error", "Failed to print invoice: " + e.getMessage());
+        }
     }
 
     @FXML
@@ -546,7 +584,10 @@ public class PaymentFormController implements Initializable {
                             message.append(String.format("Payment Method: %s\n", selectedPaymentMethod));
                             showAlert(Alert.AlertType.INFORMATION, "Payment Successful", message.toString());
 
-                            // STEP 7: Clear data & reset UI
+                            // STEP 7: Automatically Print Invoice
+                            printInvoiceAction();
+
+                            // STEP 8: Clear data & reset UI
                             AddCustomerFormController.clearTempCustomerDTO();
                             SaleDataService.getInstance().clearSaleData();
 
