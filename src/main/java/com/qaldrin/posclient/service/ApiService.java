@@ -617,4 +617,37 @@ public class ApiService {
         walletDTO.setLastUpdated(walletResponse.getLastUpdated());
         return walletDTO;
     }
+
+    public InvoiceSettingsDTO fetchInvoiceSettings() {
+        Request request = new Request.Builder()
+                .url(ApiConfig.getBaseUrl() + "/api/invoice-settings")
+                .get()
+                .build();
+        try (Response response = client.newCall(request).execute()) {
+            if (response.isSuccessful() && response.body() != null) {
+                return gson.fromJson(response.body().string(), InvoiceSettingsDTO.class);
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to fetch InvoiceSettings from Server: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public boolean downloadLogo(java.nio.file.Path targetPath) {
+        Request request = new Request.Builder()
+                .url(ApiConfig.getBaseUrl() + "/api/invoice-settings/logo")
+                .get()
+                .build();
+        try (Response response = client.newCall(request).execute()) {
+            if (response.isSuccessful() && response.body() != null) {
+                java.nio.file.Files.createDirectories(targetPath.getParent());
+                java.nio.file.Files.copy(response.body().byteStream(), targetPath,
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                return true;
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to download logo from Server: " + e.getMessage());
+        }
+        return false;
+    }
 }

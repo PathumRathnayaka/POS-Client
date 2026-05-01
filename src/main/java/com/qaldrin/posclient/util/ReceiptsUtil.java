@@ -2,6 +2,7 @@ package com.qaldrin.posclient.util;
 
 import com.qaldrin.posclient.dto.CustomerDTO;
 import com.qaldrin.posclient.model.SaleItem;
+import com.qaldrin.posclient.dto.InvoiceSettingsDTO;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.print.PrinterJob;
@@ -11,6 +12,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Line;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -24,47 +26,107 @@ public class ReceiptsUtil {
      * Generates and prints a receipt to the default printer.
      */
     public static void printReceipt(String saleId, CustomerDTO customer, List<SaleItem> items,
-            BigDecimal total, BigDecimal paid, BigDecimal change) {
-        VBox receipt = createReceiptLayout(saleId, customer, items, total, paid, change);
+            BigDecimal total, BigDecimal paid, BigDecimal change, InvoiceSettingsDTO settings) {
+        javafx.application.Platform.runLater(() -> {
+            VBox receipt = createReceiptLayout(saleId, customer, items, total, paid, change, settings);
 
-        // Use PrinterJob to print
-        PrinterJob job = PrinterJob.createPrinterJob();
-        if (job != null) {
-            // Receipt printers are sensitive to logical scale,
-            // but usually JavaFX handles this well if the Node width is restricted.
-            boolean success = job.printPage(receipt);
-            if (success) {
-                job.endJob();
+            // Apply CSS and layout explicitly to off-screen node to ensure constraints
+            // exist before printing
+            receipt.applyCss();
+            receipt.layout();
+
+            // Use PrinterJob to print
+            PrinterJob job = PrinterJob.createPrinterJob();
+            if (job != null) {
+                boolean success = job.printPage(receipt);
+                if (success) {
+                    job.endJob();
+                } else {
+                    System.err.println("Printing failed or was cancelled.");
+                }
             } else {
-                System.err.println("Printing failed or was cancelled.");
+                System.err.println("No default printer found.");
             }
-        } else {
-            System.err.println("No default printer found.");
-        }
+        });
     }
 
     /**
      * Creates a digital VBox layout of the receipt.
      */
     private static VBox createReceiptLayout(String saleId, CustomerDTO customer, List<SaleItem> items,
-            BigDecimal total, BigDecimal paid, BigDecimal change) {
+            BigDecimal total, BigDecimal paid, BigDecimal change, InvoiceSettingsDTO settings) {
         VBox container = new VBox(5);
         container.setPadding(new Insets(10));
         container.setPrefWidth(RECEIPT_WIDTH);
-        container.setStyle("-fx-background-color: white; -fx-text-fill: black;");
+        container.setStyle("-fx-background-color: white;");
 
-        // --- Header Section ---
-        Label title = new Label("POS SYSTEM");
-        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: black;");
-        title.setMaxWidth(Double.MAX_VALUE);
-        title.setAlignment(Pos.CENTER);
+        // --- Header Section / Logo ---
+        if (settings.getLogoPath() != null && !settings.getLogoPath().isEmpty()) {
+            try {
+                File file = new File(settings.getLogoPath());
+                System.out.println("[PRINT-CLIENT-DEBUG] Checking logo file. Exists? " + file.exists() + " | Path: "
+                        + file.getAbsolutePath());
+                if (file.exists()) {
+                    javafx.scene.image.Image img = new javafx.scene.image.Image(file.toURI().toString());
+                    System.out.println("[PRINT-CLIENT-DEBUG] Image Object Loaded. isError? " + img.isError()
+                            + " | WxH: " + img.getWidth() + "x" + img.getHeight());
 
-        Label subTitle = new Label("QUALITY PRODUCTS, BEST PRICE");
-        subTitle.setStyle("-fx-font-size: 10px; -fx-text-fill: black;");
+                    if (!img.isError() && img.getWidth() > 0) {
+                        double MAX_LOGO_WIDTH = RECEIPT_WIDTH - 20;
+                        double MAX_LOGO_HEIGHT = 80; // Reasonable vertical threshold for thermal paper
+
+                        double imgWidth = img.getWidth();
+                        double imgHeight = img.getHeight();
+
+                        double scaleX = MAX_LOGO_WIDTH / imgWidth;
+                        double scaleY = MAX_LOGO_HEIGHT / imgHeight;
+                        double scale = Math.min(scaleX, scaleY);
+                        if (scale > 1.0)
+                            scale = 1.0;
+
+                        double targetWidth = imgWidth * scale;
+                        double targetHeight = imgHeight * scale;
+
+                        javafx.scene.canvas.Canvas canvas = new javafx.scene.canvas.Canvas(targetWidth, targetHeight);
+                        javafx.scene.canvas.GraphicsContext gc = canvas.getGraphicsContext2D();
+
+                        // Explicitly fill the background with white to neutralize PNG transparency
+                        // issues on thermal printers
+                        gc.setFill(javafx.scene.paint.Color.WHITE);
+                        gc.fillRect(0, 0, targetWidth, targetHeight);
+
+                        // Immediatly draw pixels out before attaching to scene graph
+                        gc.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+                        HBox logoWrapper = new HBox(canvas);
+                        logoWrapper.setAlignment(Pos.CENTER);
+                        logoWrapper.setStyle("-fx-background-color: white;");
+                        container.getChildren().add(logoWrapper);
+                    } else {
+                        System.err.println("[PRINT-CLIENT-DEBUG] Logo image returned invalid dimensions.");
+                        addStringHeader(container, settings);
+                    }
+                } else {
+                    System.err.println("[PRINT-CLIENT-DEBUG] Fallback to string header: Logo file not found on disk");
+                    addStringHeader(container, settings);
+                }
+            } catch (Exception e) {
+                System.err.println("[PRINT-CLIENT-DEBUG] Exception during logo loading: " + e.getMessage());
+                e.printStackTrace();
+                addStringHeader(container, settings);
+            }
+        } else {
+            System.out.println("[PRINT-CLIENT-DEBUG] No valid logo path configured in DB. Using fallback text.");
+            addStringHeader(container, settings);
+        }
+
+        Label subTitle = new Label(settings.getCompanySlogan());
+        String subtitleStyle = "-fx-font-size: 10px; -fx-text-fill: black;";
+        subTitle.setStyle(subtitleStyle);
         subTitle.setMaxWidth(Double.MAX_VALUE);
         subTitle.setAlignment(Pos.CENTER);
 
-        container.getChildren().addAll(title, subTitle, createSeparator());
+        container.getChildren().addAll(subTitle, createSeparator());
 
         // --- Transaction Info ---
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
@@ -72,18 +134,26 @@ public class ReceiptsUtil {
         Label saleIdLabel = new Label("Inv #: " + saleId);
         Label customerLabel = new Label("Customer: " + (customer != null ? customer.getContact() : "Walk-in"));
 
-        dateLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: black;");
-        saleIdLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: black;");
-        customerLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: black;");
+        String transactionStyle = "-fx-font-size: 10px; -fx-text-fill: black;";
+        dateLabel.setStyle(transactionStyle);
+        saleIdLabel.setStyle(transactionStyle);
+        customerLabel.setStyle(transactionStyle);
 
         container.getChildren().addAll(dateLabel, saleIdLabel, customerLabel, createSeparator());
 
         // --- Items Table Header ---
         HBox header = new HBox(5);
+        header.setStyle("-fx-background-color: white;");
         Label itemH = new Label("Item");
         Label qtyH = new Label("Qty");
         Label priceH = new Label("Price");
         Label amountH = new Label("Total");
+
+        String headerStyle = "-fx-text-fill: black; -fx-font-weight: bold; -fx-font-size: 11px;";
+        itemH.setStyle(headerStyle);
+        qtyH.setStyle(headerStyle);
+        priceH.setStyle(headerStyle);
+        amountH.setStyle(headerStyle);
 
         itemH.setPrefWidth(100);
         qtyH.setPrefWidth(40);
@@ -92,16 +162,22 @@ public class ReceiptsUtil {
         amountH.setAlignment(Pos.CENTER_RIGHT);
 
         header.getChildren().addAll(itemH, qtyH, priceH, amountH);
-        header.setStyle("-fx-font-weight: bold; -fx-font-size: 10px; -fx-text-fill: black;");
         container.getChildren().add(header);
 
         // --- Items List ---
         for (SaleItem item : items) {
             HBox row = new HBox(5);
+            row.setStyle("-fx-background-color: white;");
             Label name = new Label(item.getName());
             Label qty = new Label(String.valueOf(item.getQuantity()));
             Label price = new Label(String.format("%.2f", item.getSalePrice()));
             Label amount = new Label(String.format("%.2f", item.getAmount()));
+
+            String rowStyle = "-fx-font-size: 10px; -fx-text-fill: black;";
+            name.setStyle(rowStyle);
+            qty.setStyle(rowStyle);
+            price.setStyle(rowStyle);
+            amount.setStyle(rowStyle);
 
             name.setPrefWidth(100);
             name.setWrapText(true);
@@ -110,7 +186,6 @@ public class ReceiptsUtil {
             amount.setPrefWidth(60);
             amount.setAlignment(Pos.CENTER_RIGHT);
 
-            row.setStyle("-fx-font-size: 10px; -fx-text-fill: black;");
             row.getChildren().addAll(name, qty, price, amount);
             container.getChildren().add(row);
         }
@@ -119,8 +194,7 @@ public class ReceiptsUtil {
 
         // --- Totals Section ---
         container.getChildren().add(createTotalRow("SUBTOTAL", total));
-        container.getChildren().add(createTotalRow("TAX (LKR)", BigDecimal.ZERO)); // Replace with actual tax logic if
-                                                                                   // needed
+        container.getChildren().add(createTotalRow("TAX (LKR)", BigDecimal.ZERO));
         container.getChildren().add(createTotalRow("TOTAL", total, true));
         container.getChildren().add(createSeparator());
         container.getChildren().add(createTotalRow("PAID", paid));
@@ -129,12 +203,12 @@ public class ReceiptsUtil {
         container.getChildren().add(createSeparator());
 
         // --- Footer ---
-        Label footer = new Label("THANK YOU FOR YOUR BUSINESS!");
+        Label footer = new Label(settings.getFooterMessage1());
         footer.setStyle("-fx-font-size: 10px; -fx-font-style: italic; -fx-text-fill: black;");
         footer.setMaxWidth(Double.MAX_VALUE);
         footer.setAlignment(Pos.CENTER);
 
-        Label footer2 = new Label("PLEASE COME AGAIN!");
+        Label footer2 = new Label(settings.getFooterMessage2());
         footer2.setStyle("-fx-font-size: 9px; -fx-text-fill: black;");
         footer2.setMaxWidth(Double.MAX_VALUE);
         footer2.setAlignment(Pos.CENTER);
@@ -142,6 +216,14 @@ public class ReceiptsUtil {
         container.getChildren().addAll(footer, footer2);
 
         return container;
+    }
+
+    private static void addStringHeader(VBox container, InvoiceSettingsDTO settings) {
+        Label title = new Label(settings.getCompanyName());
+        title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: black;");
+        title.setMaxWidth(Double.MAX_VALUE);
+        title.setAlignment(Pos.CENTER);
+        container.getChildren().add(title);
     }
 
     /**
@@ -160,6 +242,8 @@ public class ReceiptsUtil {
 
     private static HBox createTotalRow(String labelText, BigDecimal value, boolean bold) {
         HBox row = new HBox();
+        row.setStyle("-fx-background-color: white;");
+
         Label label = new Label(labelText);
         Label val = new Label(String.format("LKR %.2f", value));
 
@@ -168,9 +252,13 @@ public class ReceiptsUtil {
         val.setAlignment(Pos.CENTER_RIGHT);
 
         if (bold) {
-            row.setStyle("-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: black;");
+            String boldStyle = "-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: black;";
+            label.setStyle(boldStyle);
+            val.setStyle(boldStyle);
         } else {
-            row.setStyle("-fx-font-size: 10px; -fx-text-fill: black;");
+            String standardStyle = "-fx-font-size: 10px; -fx-text-fill: black;";
+            label.setStyle(standardStyle);
+            val.setStyle(standardStyle);
         }
 
         row.getChildren().addAll(label, val);

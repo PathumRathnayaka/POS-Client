@@ -435,7 +435,21 @@ public class PaymentFormController implements Initializable {
             if (change.compareTo(BigDecimal.ZERO) < 0)
                 change = BigDecimal.ZERO;
 
-            ReceiptsUtil.printReceipt(saleId, customer, saleItems, total, paidAmount, change);
+            InvoiceSettingsDTO settings = apiService.fetchInvoiceSettings();
+            if (settings != null && settings.isHasLogo()) {
+                java.nio.file.Path tmpLogo = java.nio.file.Paths.get(System.getProperty("java.io.tmpdir"),
+                        "pos_client_logo.png");
+                if (apiService.downloadLogo(tmpLogo)) {
+                    settings.setLogoPath(tmpLogo.toAbsolutePath().toString());
+                }
+            } else if (settings == null) {
+                settings = new InvoiceSettingsDTO();
+                settings.setCompanyName("POS SYSTEM");
+                settings.setCompanySlogan("QUALITY PRODUCTS, BEST PRICE");
+                settings.setFooterMessage1("THANK YOU FOR YOUR BUSINESS!");
+                settings.setFooterMessage2("PLEASE COME AGAIN!");
+            }
+            ReceiptsUtil.printReceipt(saleId, customer, saleItems, total, paidAmount, change, settings);
 
         } catch (Exception e) {
             System.err.println("Error printing invoice: " + e.getMessage());
