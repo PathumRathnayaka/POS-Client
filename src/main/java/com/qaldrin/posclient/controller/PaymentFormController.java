@@ -458,10 +458,13 @@ public class PaymentFormController implements Initializable {
         }
     }
 
+    private boolean isProcessing = false;
+
     @FXML
     private void onDone() {
-        if (paymentProcessed) {
-            showAlert(Alert.AlertType.WARNING, "Already Processed", "This payment has already been processed!");
+        if (paymentProcessed || isProcessing) {
+            showAlert(Alert.AlertType.WARNING, "Already Processed",
+                    "This payment has already been processed or is currently processing.");
             return;
         }
 
@@ -476,6 +479,8 @@ public class PaymentFormController implements Initializable {
             showAlert(Alert.AlertType.WARNING, "Amount Required", "Please enter the paid amount");
             return;
         }
+
+        isProcessing = true;
 
         try {
             BigDecimal paidAmount = new BigDecimal(paidText);
@@ -493,6 +498,7 @@ public class PaymentFormController implements Initializable {
 
             // ✅ Validate against wallet-adjusted amount
             if (paidAmount.compareTo(finalAmountToPay) < 0) {
+                isProcessing = false;
                 showAlert(Alert.AlertType.WARNING, "Insufficient Amount",
                         String.format("Paid amount (Rs. %.2f) is less than amount to pay (Rs. %.2f)",
                                 paidAmount, finalAmountToPay));
@@ -503,6 +509,7 @@ public class PaymentFormController implements Initializable {
             String tempSaleId = AddCustomerFormController.getTempSaleId();
 
             if (tempCustomer == null || tempSaleId == null) {
+                isProcessing = false;
                 showAlert(Alert.AlertType.ERROR, "No Data",
                         "Customer or sale information is missing. Please add customer first.");
                 return;
@@ -630,6 +637,7 @@ public class PaymentFormController implements Initializable {
 
                     } else {
                         Platform.runLater(() -> {
+                            isProcessing = false;
                             if (invoiceMessage != null) {
                                 invoiceMessage.setVisible(false);
                                 invoiceMessage.setManaged(false);
@@ -641,6 +649,7 @@ public class PaymentFormController implements Initializable {
 
                 } catch (Exception e) {
                     Platform.runLater(() -> {
+                        isProcessing = false;
                         if (invoiceMessage != null) {
                             invoiceMessage.setVisible(false);
                             invoiceMessage.setManaged(false);
@@ -653,6 +662,7 @@ public class PaymentFormController implements Initializable {
             }).start();
 
         } catch (NumberFormatException e) {
+            isProcessing = false;
             showAlert(Alert.AlertType.ERROR, "Invalid Amount", "Please enter a valid number");
         }
     }
