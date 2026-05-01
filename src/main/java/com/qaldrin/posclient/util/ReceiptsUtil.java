@@ -38,6 +38,7 @@ public class ReceiptsUtil {
             // Use PrinterJob to print
             PrinterJob job = PrinterJob.createPrinterJob();
             if (job != null) {
+                job.getJobSettings().setJobName(saleId);
                 boolean success = job.printPage(receipt);
                 if (success) {
                     job.endJob();
@@ -59,6 +60,11 @@ public class ReceiptsUtil {
         container.setPadding(new Insets(10));
         container.setPrefWidth(RECEIPT_WIDTH);
         container.setStyle("-fx-background-color: white;");
+
+        // --- TRACE DEBUG ---
+        System.out.println("[RECEIPT-DEBUG] Rendering Invoice...");
+        System.out.println("[RECEIPT-DEBUG] Address: " + settings.getCompanyAddress());
+        System.out.println("[RECEIPT-DEBUG] Contact: " + settings.getCompanyContact());
 
         // --- Header Section / Logo ---
         if (settings.getLogoPath() != null && !settings.getLogoPath().isEmpty()) {
@@ -126,7 +132,27 @@ public class ReceiptsUtil {
         subTitle.setMaxWidth(Double.MAX_VALUE);
         subTitle.setAlignment(Pos.CENTER);
 
-        container.getChildren().addAll(subTitle, createSeparator());
+        container.getChildren().add(subTitle);
+
+        if (settings.getCompanyAddress() != null && !settings.getCompanyAddress().trim().isEmpty()) {
+            System.out.println("[RECEIPT-DEBUG] Adding address label to Layout");
+            Label address = new Label(settings.getCompanyAddress());
+            address.setStyle("-fx-font-size: 9px; -fx-text-fill: black;");
+            address.setMaxWidth(Double.MAX_VALUE);
+            address.setAlignment(Pos.CENTER);
+            container.getChildren().add(address);
+        }
+
+        if (settings.getCompanyContact() != null && !settings.getCompanyContact().trim().isEmpty()) {
+            System.out.println("[RECEIPT-DEBUG] Adding contact label to Layout");
+            Label contact = new Label("Tel: " + settings.getCompanyContact());
+            contact.setStyle("-fx-font-size: 9px; -fx-text-fill: black;");
+            contact.setMaxWidth(Double.MAX_VALUE);
+            contact.setAlignment(Pos.CENTER);
+            container.getChildren().add(contact);
+        }
+
+        container.getChildren().add(createSeparator());
 
         // --- Transaction Info ---
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");

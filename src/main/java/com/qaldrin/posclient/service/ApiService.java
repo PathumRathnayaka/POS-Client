@@ -625,7 +625,9 @@ public class ApiService {
                 .build();
         try (Response response = client.newCall(request).execute()) {
             if (response.isSuccessful() && response.body() != null) {
-                return gson.fromJson(response.body().string(), InvoiceSettingsDTO.class);
+                String rawJson = response.body().string();
+                System.out.println("[API-DEBUG] Raw Invoice Settings JSON from Server: " + rawJson);
+                return gson.fromJson(rawJson, InvoiceSettingsDTO.class);
             }
         } catch (IOException e) {
             System.err.println("Failed to fetch InvoiceSettings from Server: " + e.getMessage());

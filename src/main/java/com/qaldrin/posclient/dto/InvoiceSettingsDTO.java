@@ -3,6 +3,8 @@ package com.qaldrin.posclient.dto;
 public class InvoiceSettingsDTO {
     private String companyName;
     private String companySlogan;
+    private String companyAddress;
+    private String companyContact;
     private String footerMessage1;
     private String footerMessage2;
     private boolean hasLogo;
@@ -25,6 +27,22 @@ public class InvoiceSettingsDTO {
 
     public void setCompanySlogan(String companySlogan) {
         this.companySlogan = companySlogan;
+    }
+
+    public String getCompanyAddress() {
+        return companyAddress;
+    }
+
+    public void setCompanyAddress(String companyAddress) {
+        this.companyAddress = companyAddress;
+    }
+
+    public String getCompanyContact() {
+        return companyContact;
+    }
+
+    public void setCompanyContact(String companyContact) {
+        this.companyContact = companyContact;
     }
 
     public String getFooterMessage1() {
