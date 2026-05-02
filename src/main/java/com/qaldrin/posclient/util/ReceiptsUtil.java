@@ -123,9 +123,9 @@ public class ReceiptsUtil {
         priceH.setStyle(headerStyle);
         amountH.setStyle(headerStyle);
 
-        itemH.setPrefWidth(100);
-        qtyH.setPrefWidth(40);
-        priceH.setPrefWidth(60);
+        itemH.setPrefWidth(90);
+        qtyH.setPrefWidth(55);
+        priceH.setPrefWidth(55);
         amountH.setPrefWidth(60);
         amountH.setAlignment(Pos.CENTER_RIGHT);
 
@@ -147,10 +147,10 @@ public class ReceiptsUtil {
             price.setStyle(rowStyle);
             amount.setStyle(rowStyle);
 
-            name.setPrefWidth(100);
+            name.setPrefWidth(90);
             name.setWrapText(true);
-            qty.setPrefWidth(40);
-            price.setPrefWidth(60);
+            qty.setPrefWidth(55);
+            price.setPrefWidth(55);
             amount.setPrefWidth(60);
             amount.setAlignment(Pos.CENTER_RIGHT);
 
