@@ -297,6 +297,7 @@ public class DashboardContentController implements Initializable {
                     batch.getCategory(),
                     batch.getBarcode(),
                     batch.getSalePrice(),
+                    batch.getOurPrice(), // Added
                     BigDecimal.ONE,
                     batch.getUnitType(),
                     batch.getBatchId()); // Pass batchId for uniqueness

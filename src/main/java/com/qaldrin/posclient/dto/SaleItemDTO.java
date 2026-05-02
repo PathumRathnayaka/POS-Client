@@ -13,9 +13,18 @@ public class SaleItemDTO {
     private String barcode;
     private BigDecimal quantity;
     private BigDecimal salePrice;
+    private BigDecimal ourPrice; // NEW
     private BigDecimal amount;
 
     // Getters and Setters
+    public BigDecimal getOurPrice() {
+        return ourPrice;
+    }
+
+    public void setOurPrice(BigDecimal ourPrice) {
+        this.ourPrice = ourPrice;
+    }
+
     public String getProductId() {
         return productId;
     }

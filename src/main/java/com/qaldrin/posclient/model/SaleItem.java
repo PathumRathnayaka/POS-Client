@@ -11,6 +11,7 @@ public class SaleItem {
     private final StringProperty name;
     private final StringProperty category;
     private final ObjectProperty<BigDecimal> salePrice;
+    private final ObjectProperty<BigDecimal> ourPrice; // NEW
     private final ObjectProperty<BigDecimal> quantity;
     private final ObjectProperty<BigDecimal> amount;
     private final StringProperty barcode;
@@ -19,11 +20,11 @@ public class SaleItem {
 
     public SaleItem(String id, String name, String category, String barcode,
             BigDecimal salePrice, BigDecimal quantity, String unitType) {
-        this(id, name, category, barcode, salePrice, quantity, unitType, null);
+        this(id, name, category, barcode, salePrice, salePrice, quantity, unitType, null);
     }
 
     public SaleItem(String id, String name, String category, String barcode,
-            BigDecimal salePrice, BigDecimal quantity, String unitType, String batchId) {
+            BigDecimal salePrice, BigDecimal ourPrice, BigDecimal quantity, String unitType, String batchId) {
         this.id = new SimpleStringProperty(id);
         this.name = new SimpleStringProperty(name);
         this.category = new SimpleStringProperty(category);
@@ -31,8 +32,9 @@ public class SaleItem {
         this.unitType = new SimpleStringProperty(unitType);
         this.batchId = new SimpleStringProperty(batchId);
         this.salePrice = new SimpleObjectProperty<>(salePrice);
+        this.ourPrice = new SimpleObjectProperty<>(ourPrice != null ? ourPrice : salePrice);
         this.quantity = new SimpleObjectProperty<>(quantity);
-        this.amount = new SimpleObjectProperty<>(salePrice.multiply(quantity));
+        this.amount = new SimpleObjectProperty<>((ourPrice != null ? ourPrice : salePrice).multiply(quantity));
     }
 
     // ID Property
@@ -111,6 +113,19 @@ public class SaleItem {
 
     public void setSalePrice(BigDecimal salePrice) {
         this.salePrice.set(salePrice);
+    }
+
+    // Our Price Property
+    public BigDecimal getOurPrice() {
+        return ourPrice.get();
+    }
+
+    public ObjectProperty<BigDecimal> ourPriceProperty() {
+        return ourPrice;
+    }
+
+    public void setOurPrice(BigDecimal ourPrice) {
+        this.ourPrice.set(ourPrice);
         updateAmount();
     }
 
@@ -147,7 +162,8 @@ public class SaleItem {
     }
 
     private void updateAmount() {
-        BigDecimal newAmount = salePrice.get().multiply(quantity.get());
+        BigDecimal priceToUse = ourPrice.get() != null ? ourPrice.get() : salePrice.get();
+        BigDecimal newAmount = priceToUse.multiply(quantity.get());
         this.amount.set(newAmount);
     }
 }

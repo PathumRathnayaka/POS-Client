@@ -138,7 +138,7 @@ public class ReceiptsUtil {
             row.setStyle("-fx-background-color: white;");
             Label name = new Label(item.getName());
             Label qty = new Label(String.valueOf(item.getQuantity()));
-            Label price = new Label(String.format("%.2f", item.getSalePrice()));
+            Label price = new Label(String.format("%.2f", item.getOurPrice())); // Show ourPrice
             Label amount = new Label(String.format("%.2f", item.getAmount()));
 
             String rowStyle = "-fx-font-size: 10px; -fx-text-fill: black;";
@@ -169,6 +169,23 @@ public class ReceiptsUtil {
         container.getChildren().add(createTotalRow(getLabel("CHANGE", lang), change, false, lang));
 
         container.getChildren().add(createSeparator());
+
+        // --- Profit / Savings Section ---
+        BigDecimal totalProfit = items.stream()
+                .map(item -> {
+                    BigDecimal unitProfit = item.getSalePrice().subtract(item.getOurPrice());
+                    return unitProfit.multiply(item.getQuantity());
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (totalProfit.compareTo(BigDecimal.ZERO) > 0) {
+            String profitLabel = getLabel("PROFIT_MESSAGE", lang);
+            Label profitMsg = new Label(String.format("%s = %.2f", profitLabel, totalProfit.doubleValue()));
+            profitMsg.setStyle("-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: black;");
+            profitMsg.setMaxWidth(Double.MAX_VALUE);
+            profitMsg.setAlignment(Pos.CENTER);
+            container.getChildren().add(profitMsg);
+        }
 
         // --- Footer ---
         Label footer = new Label(settings.getFooterMessage1());
@@ -264,8 +281,12 @@ public class ReceiptsUtil {
     }
 
     private static String getLabel(String key, String lang) {
-        if (lang == null || !lang.equalsIgnoreCase("SINHALA"))
+        if (lang == null || !lang.equalsIgnoreCase("SINHALA")) {
+            if (key.equals("PROFIT_MESSAGE")) {
+                return "The profit you earned from this bill";
+            }
             return key;
+        }
 
         switch (key) {
             case "Date:":
@@ -294,6 +315,8 @@ public class ReceiptsUtil {
                 return "ගෙවූ මුදල";
             case "CHANGE":
                 return "ඉතිරි මුදල";
+            case "PROFIT_MESSAGE":
+                return "මෙම බිලෙන් ඔබට ලැබුන ලාබය";
             default:
                 return key;
         }
