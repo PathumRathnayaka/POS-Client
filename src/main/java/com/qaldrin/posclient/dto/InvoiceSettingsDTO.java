@@ -9,6 +9,7 @@ public class InvoiceSettingsDTO {
     private String footerMessage2;
     private boolean hasLogo;
     private String logoPath;
+    private String language;
 
     public InvoiceSettingsDTO() {
     }
@@ -75,5 +76,13 @@ public class InvoiceSettingsDTO {
 
     public void setLogoPath(String logoPath) {
         this.logoPath = logoPath;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
     }
 }

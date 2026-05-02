@@ -619,14 +619,23 @@ public class ApiService {
     }
 
     public InvoiceSettingsDTO fetchInvoiceSettings() {
+        return fetchInvoiceSettings("ENGLISH");
+    }
+
+    public InvoiceSettingsDTO fetchInvoiceSettings(String lang) {
+        String url = ApiConfig.getBaseUrl() + "/api/invoice-settings";
+        if (lang != null && !lang.isEmpty()) {
+            url += "?lang=" + lang;
+        }
+
         Request request = new Request.Builder()
-                .url(ApiConfig.getBaseUrl() + "/api/invoice-settings")
+                .url(url)
                 .get()
                 .build();
         try (Response response = client.newCall(request).execute()) {
             if (response.isSuccessful() && response.body() != null) {
                 String rawJson = response.body().string();
-                System.out.println("[API-DEBUG] Raw Invoice Settings JSON from Server: " + rawJson);
+                System.out.println("[API-DEBUG] Raw Invoice Settings JSON from Server (" + lang + "): " + rawJson);
                 return gson.fromJson(rawJson, InvoiceSettingsDTO.class);
             }
         } catch (IOException e) {
