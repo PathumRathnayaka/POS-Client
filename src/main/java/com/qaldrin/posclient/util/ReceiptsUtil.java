@@ -56,75 +56,16 @@ public class ReceiptsUtil {
      */
     private static VBox createReceiptLayout(String saleId, CustomerDTO customer, List<SaleItem> items,
             BigDecimal total, BigDecimal paid, BigDecimal change, InvoiceSettingsDTO settings) {
+        String lang = settings.getLanguage();
         VBox container = new VBox(5);
         container.setPadding(new Insets(10));
         container.setPrefWidth(RECEIPT_WIDTH);
         container.setStyle("-fx-background-color: white;");
 
         // --- TRACE DEBUG ---
-        System.out.println("[RECEIPT-DEBUG] Rendering Invoice...");
-        System.out.println("[RECEIPT-DEBUG] Address: " + settings.getCompanyAddress());
-        System.out.println("[RECEIPT-DEBUG] Contact: " + settings.getCompanyContact());
+        System.out.println("[RECEIPT-DEBUG] Rendering Invoice (" + lang + ")...");
 
-        // --- Header Section / Logo ---
-        if (settings.getLogoPath() != null && !settings.getLogoPath().isEmpty()) {
-            try {
-                File file = new File(settings.getLogoPath());
-                System.out.println("[PRINT-CLIENT-DEBUG] Checking logo file. Exists? " + file.exists() + " | Path: "
-                        + file.getAbsolutePath());
-                if (file.exists()) {
-                    javafx.scene.image.Image img = new javafx.scene.image.Image(file.toURI().toString());
-                    System.out.println("[PRINT-CLIENT-DEBUG] Image Object Loaded. isError? " + img.isError()
-                            + " | WxH: " + img.getWidth() + "x" + img.getHeight());
-
-                    if (!img.isError() && img.getWidth() > 0) {
-                        double MAX_LOGO_WIDTH = RECEIPT_WIDTH - 20;
-                        double MAX_LOGO_HEIGHT = 80; // Reasonable vertical threshold for thermal paper
-
-                        double imgWidth = img.getWidth();
-                        double imgHeight = img.getHeight();
-
-                        double scaleX = MAX_LOGO_WIDTH / imgWidth;
-                        double scaleY = MAX_LOGO_HEIGHT / imgHeight;
-                        double scale = Math.min(scaleX, scaleY);
-                        if (scale > 1.0)
-                            scale = 1.0;
-
-                        double targetWidth = imgWidth * scale;
-                        double targetHeight = imgHeight * scale;
-
-                        javafx.scene.canvas.Canvas canvas = new javafx.scene.canvas.Canvas(targetWidth, targetHeight);
-                        javafx.scene.canvas.GraphicsContext gc = canvas.getGraphicsContext2D();
-
-                        // Explicitly fill the background with white to neutralize PNG transparency
-                        // issues on thermal printers
-                        gc.setFill(javafx.scene.paint.Color.WHITE);
-                        gc.fillRect(0, 0, targetWidth, targetHeight);
-
-                        // Immediatly draw pixels out before attaching to scene graph
-                        gc.drawImage(img, 0, 0, targetWidth, targetHeight);
-
-                        HBox logoWrapper = new HBox(canvas);
-                        logoWrapper.setAlignment(Pos.CENTER);
-                        logoWrapper.setStyle("-fx-background-color: white;");
-                        container.getChildren().add(logoWrapper);
-                    } else {
-                        System.err.println("[PRINT-CLIENT-DEBUG] Logo image returned invalid dimensions.");
-                        addStringHeader(container, settings);
-                    }
-                } else {
-                    System.err.println("[PRINT-CLIENT-DEBUG] Fallback to string header: Logo file not found on disk");
-                    addStringHeader(container, settings);
-                }
-            } catch (Exception e) {
-                System.err.println("[PRINT-CLIENT-DEBUG] Exception during logo loading: " + e.getMessage());
-                e.printStackTrace();
-                addStringHeader(container, settings);
-            }
-        } else {
-            System.out.println("[PRINT-CLIENT-DEBUG] No valid logo path configured in DB. Using fallback text.");
-            addStringHeader(container, settings);
-        }
+        renderHeader(container, settings);
 
         Label subTitle = new Label(settings.getCompanySlogan());
         String subtitleStyle = "-fx-font-size: 10px; -fx-text-fill: black;";
@@ -135,7 +76,6 @@ public class ReceiptsUtil {
         container.getChildren().add(subTitle);
 
         if (settings.getCompanyAddress() != null && !settings.getCompanyAddress().trim().isEmpty()) {
-            System.out.println("[RECEIPT-DEBUG] Adding address label to Layout");
             Label address = new Label(settings.getCompanyAddress());
             address.setStyle("-fx-font-size: 9px; -fx-text-fill: black;");
             address.setMaxWidth(Double.MAX_VALUE);
@@ -144,8 +84,8 @@ public class ReceiptsUtil {
         }
 
         if (settings.getCompanyContact() != null && !settings.getCompanyContact().trim().isEmpty()) {
-            System.out.println("[RECEIPT-DEBUG] Adding contact label to Layout");
-            Label contact = new Label("Tel: " + settings.getCompanyContact());
+            String contactPrefix = (lang != null && lang.equalsIgnoreCase("SINHALA")) ? "දු.ක: " : "Tel: ";
+            Label contact = new Label(contactPrefix + settings.getCompanyContact());
             contact.setStyle("-fx-font-size: 9px; -fx-text-fill: black;");
             contact.setMaxWidth(Double.MAX_VALUE);
             contact.setAlignment(Pos.CENTER);
@@ -156,9 +96,11 @@ public class ReceiptsUtil {
 
         // --- Transaction Info ---
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
-        Label dateLabel = new Label("Date: " + dtf.format(LocalDateTime.now()));
-        Label saleIdLabel = new Label("Inv #: " + saleId);
-        Label customerLabel = new Label("Customer: " + (customer != null ? customer.getContact() : "Walk-in"));
+        Label dateLabel = new Label(getLabel("Date:", lang) + " " + dtf.format(LocalDateTime.now()));
+        Label saleIdLabel = new Label(getLabel("Inv #:", lang) + " " + saleId);
+
+        String custVal = (customer != null ? customer.getContact() : getLabel("Walk-in", lang));
+        Label customerLabel = new Label(getLabel("Customer:", lang) + " " + custVal);
 
         String transactionStyle = "-fx-font-size: 10px; -fx-text-fill: black;";
         dateLabel.setStyle(transactionStyle);
@@ -170,10 +112,10 @@ public class ReceiptsUtil {
         // --- Items Table Header ---
         HBox header = new HBox(5);
         header.setStyle("-fx-background-color: white;");
-        Label itemH = new Label("Item");
-        Label qtyH = new Label("Qty");
-        Label priceH = new Label("Price");
-        Label amountH = new Label("Total");
+        Label itemH = new Label(getLabel("Item", lang));
+        Label qtyH = new Label(getLabel("Qty", lang));
+        Label priceH = new Label(getLabel("Price", lang));
+        Label amountH = new Label(getLabel("Total", lang));
 
         String headerStyle = "-fx-text-fill: black; -fx-font-weight: bold; -fx-font-size: 11px;";
         itemH.setStyle(headerStyle);
@@ -219,12 +161,12 @@ public class ReceiptsUtil {
         container.getChildren().add(createSeparator());
 
         // --- Totals Section ---
-        container.getChildren().add(createTotalRow("SUBTOTAL", total));
-        container.getChildren().add(createTotalRow("TAX (LKR)", BigDecimal.ZERO));
-        container.getChildren().add(createTotalRow("TOTAL", total, true));
+        container.getChildren().add(createTotalRow(getLabel("SUBTOTAL", lang), total, false, lang));
+        container.getChildren().add(createTotalRow(getLabel("TAX (LKR)", lang), BigDecimal.ZERO, false, lang));
+        container.getChildren().add(createTotalRow(getLabel("TOTAL", lang), total, true, lang));
         container.getChildren().add(createSeparator());
-        container.getChildren().add(createTotalRow("PAID", paid));
-        container.getChildren().add(createTotalRow("CHANGE", change));
+        container.getChildren().add(createTotalRow(getLabel("PAID", lang), paid, false, lang));
+        container.getChildren().add(createTotalRow(getLabel("CHANGE", lang), change, false, lang));
 
         container.getChildren().add(createSeparator());
 
@@ -244,6 +186,42 @@ public class ReceiptsUtil {
         return container;
     }
 
+    private static void renderHeader(VBox container, InvoiceSettingsDTO settings) {
+        if (settings.getLogoPath() != null && !settings.getLogoPath().isEmpty()) {
+            try {
+                File file = new File(settings.getLogoPath());
+                if (file.exists()) {
+                    javafx.scene.image.Image img = new javafx.scene.image.Image(file.toURI().toString());
+                    if (!img.isError() && img.getWidth() > 0) {
+                        double MAX_LOGO_WIDTH = RECEIPT_WIDTH - 20;
+                        double MAX_LOGO_HEIGHT = 80;
+                        double imgWidth = img.getWidth();
+                        double imgHeight = img.getHeight();
+                        double scale = Math.min(MAX_LOGO_WIDTH / imgWidth, MAX_LOGO_HEIGHT / imgHeight);
+                        if (scale > 1.0)
+                            scale = 1.0;
+                        double targetWidth = imgWidth * scale;
+                        double targetHeight = imgHeight * scale;
+
+                        javafx.scene.canvas.Canvas canvas = new javafx.scene.canvas.Canvas(targetWidth, targetHeight);
+                        javafx.scene.canvas.GraphicsContext gc = canvas.getGraphicsContext2D();
+                        gc.setFill(javafx.scene.paint.Color.WHITE);
+                        gc.fillRect(0, 0, targetWidth, targetHeight);
+                        gc.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+                        HBox logoWrapper = new HBox(canvas);
+                        logoWrapper.setAlignment(Pos.CENTER);
+                        logoWrapper.setStyle("-fx-background-color: white;");
+                        container.getChildren().add(logoWrapper);
+                        return;
+                    }
+                }
+            } catch (Exception e) {
+            }
+        }
+        addStringHeader(container, settings);
+    }
+
     private static void addStringHeader(VBox container, InvoiceSettingsDTO settings) {
         Label title = new Label(settings.getCompanyName());
         title.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: black;");
@@ -252,9 +230,6 @@ public class ReceiptsUtil {
         container.getChildren().add(title);
     }
 
-    /**
-     * Creates a dashed line separator for the receipt.
-     */
     private static Line createSeparator() {
         Line line = new Line(0, 0, RECEIPT_WIDTH - 20, 0);
         line.getStrokeDashArray().addAll(2.0, 2.0);
@@ -262,19 +237,16 @@ public class ReceiptsUtil {
         return line;
     }
 
-    private static HBox createTotalRow(String labelText, BigDecimal value) {
-        return createTotalRow(labelText, value, false);
-    }
-
-    private static HBox createTotalRow(String labelText, BigDecimal value, boolean bold) {
+    private static HBox createTotalRow(String labelText, BigDecimal value, boolean bold, String lang) {
         HBox row = new HBox();
         row.setStyle("-fx-background-color: white;");
 
         Label label = new Label(labelText);
-        Label val = new Label(String.format("LKR %.2f", value));
+        String currency = (lang != null && lang.equalsIgnoreCase("SINHALA")) ? "රු. " : "LKR ";
+        Label val = new Label(String.format(currency + "%.2f", value));
 
         HBox.setHgrow(label, Priority.ALWAYS);
-        val.setPrefWidth(100);
+        val.setPrefWidth(120);
         val.setAlignment(Pos.CENTER_RIGHT);
 
         if (bold) {
@@ -289,5 +261,41 @@ public class ReceiptsUtil {
 
         row.getChildren().addAll(label, val);
         return row;
+    }
+
+    private static String getLabel(String key, String lang) {
+        if (lang == null || !lang.equalsIgnoreCase("SINHALA"))
+            return key;
+
+        switch (key) {
+            case "Date:":
+                return "දිනය:";
+            case "Inv #:":
+                return "අංකය:";
+            case "Customer:":
+                return "පාරිභෝගිකයා:";
+            case "Walk-in":
+                return "සාමාන්‍ය";
+            case "Item":
+                return "විස්තරය";
+            case "Qty":
+                return "ප්‍රමාණය";
+            case "Price":
+                return "මිල";
+            case "Total":
+                return "මුළු මුදල";
+            case "SUBTOTAL":
+                return "එකතුව";
+            case "TAX (LKR)":
+                return "බදු (රු.)";
+            case "TOTAL":
+                return "මුළු එකතුව";
+            case "PAID":
+                return "ගෙවූ මුදල";
+            case "CHANGE":
+                return "ඉතිරි මුදල";
+            default:
+                return key;
+        }
     }
 }

@@ -619,7 +619,7 @@ public class ApiService {
     }
 
     public InvoiceSettingsDTO fetchInvoiceSettings() {
-        return fetchInvoiceSettings("ENGLISH");
+        return fetchInvoiceSettings(null);
     }
 
     public InvoiceSettingsDTO fetchInvoiceSettings(String lang) {
