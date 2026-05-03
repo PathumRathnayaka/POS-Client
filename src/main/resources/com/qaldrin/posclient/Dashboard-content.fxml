@@ -55,12 +55,13 @@
                                   -fx-focus-color: #25D366; -fx-faint-focus-color: transparent;">
 
                     <columns>
-                        <TableColumn fx:id="colId" text="ID" prefWidth="75.0" />
-                        <TableColumn fx:id="colName" text="Name" prefWidth="220.0" />
-                        <TableColumn fx:id="colCategory" text="Category" prefWidth="160.0" />
-                        <TableColumn fx:id="colSalePrice" text="Sale Price" prefWidth="160.0" />
-                        <TableColumn fx:id="colQuantity" text="Qty" prefWidth="100.0" />
-                        <TableColumn fx:id="colAmount" text="Amount" prefWidth="160.0" />
+                        <TableColumn fx:id="colId" text="Count" prefWidth="75.0" />
+                        <TableColumn fx:id="colName" text="Name" prefWidth="210.0" />
+                        <TableColumn fx:id="colCategory" text="Category" prefWidth="130.0" />
+                        <TableColumn fx:id="colSalePrice" text="Sale Price" prefWidth="130.0" />
+                        <TableColumn fx:id="colOurPrice" text="Our Price" prefWidth="130.0" />
+                        <TableColumn fx:id="colQuantity" text="Qty" prefWidth="90.0" />
+                        <TableColumn fx:id="colAmount" text="Amount" prefWidth="135.0" />
                     </columns>
 
                 </TableView>

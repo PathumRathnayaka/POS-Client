@@ -40,6 +40,8 @@ public class DashboardContentController implements Initializable {
     @FXML
     private TableColumn<SaleItem, BigDecimal> colSalePrice;
     @FXML
+    private TableColumn<SaleItem, BigDecimal> colOurPrice;
+    @FXML
     private TableColumn<SaleItem, BigDecimal> colQuantity;
     @FXML
     private TableColumn<SaleItem, BigDecimal> colAmount;
@@ -69,10 +71,23 @@ public class DashboardContentController implements Initializable {
     }
 
     private void initializeTableColumns() {
-        colId.setCellValueFactory(cellData -> cellData.getValue().idProperty());
+        // ID Column - Show row index (count)
+        colId.setCellFactory(column -> new TableCell<SaleItem, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setText(null);
+                } else {
+                    setText(String.valueOf(getIndex() + 1));
+                }
+            }
+        });
+
         colName.setCellValueFactory(cellData -> cellData.getValue().nameProperty());
         colCategory.setCellValueFactory(cellData -> cellData.getValue().categoryProperty());
         colSalePrice.setCellValueFactory(cellData -> cellData.getValue().salePriceProperty());
+        colOurPrice.setCellValueFactory(cellData -> cellData.getValue().ourPriceProperty());
         colQuantity.setCellValueFactory(cellData -> cellData.getValue().quantityProperty());
         colAmount.setCellValueFactory(cellData -> cellData.getValue().amountProperty());
 
@@ -80,6 +95,7 @@ public class DashboardContentController implements Initializable {
         colName.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: white;");
         colCategory.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: white;");
         colSalePrice.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: white;");
+        colOurPrice.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: white;");
         colQuantity.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: white;");
         colAmount.setStyle("-fx-alignment: CENTER-LEFT; -fx-text-fill: white;");
 
