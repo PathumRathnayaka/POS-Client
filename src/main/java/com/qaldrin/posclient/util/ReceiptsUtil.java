@@ -114,22 +114,25 @@ public class ReceiptsUtil {
         header.setStyle("-fx-background-color: white;");
         Label itemH = new Label(getLabel("Item", lang));
         Label qtyH = new Label(getLabel("Qty", lang));
-        Label priceH = new Label(getLabel("Price", lang));
+        Label mrpH = new Label(getLabel("MRP", lang)); // NEW
+        Label ourPriceH = new Label(getLabel("Our", lang)); // NEW
         Label amountH = new Label(getLabel("Total", lang));
 
-        String headerStyle = "-fx-text-fill: black; -fx-font-weight: bold; -fx-font-size: 11px;";
+        String headerStyle = "-fx-text-fill: black; -fx-font-weight: bold; -fx-font-size: 10px;";
         itemH.setStyle(headerStyle);
         qtyH.setStyle(headerStyle);
-        priceH.setStyle(headerStyle);
+        mrpH.setStyle(headerStyle);
+        ourPriceH.setStyle(headerStyle);
         amountH.setStyle(headerStyle);
 
-        itemH.setPrefWidth(90);
-        qtyH.setPrefWidth(55);
-        priceH.setPrefWidth(55);
-        amountH.setPrefWidth(60);
+        itemH.setPrefWidth(60);
+        qtyH.setPrefWidth(30);
+        mrpH.setPrefWidth(45);
+        ourPriceH.setPrefWidth(60);
+        amountH.setPrefWidth(65);
         amountH.setAlignment(Pos.CENTER_RIGHT);
 
-        header.getChildren().addAll(itemH, qtyH, priceH, amountH);
+        header.getChildren().addAll(itemH, qtyH, mrpH, ourPriceH, amountH);
         container.getChildren().add(header);
 
         // --- Items List ---
@@ -138,23 +141,26 @@ public class ReceiptsUtil {
             row.setStyle("-fx-background-color: white;");
             Label name = new Label(item.getName());
             Label qty = new Label(String.valueOf(item.getQuantity()));
-            Label price = new Label(String.format("%.2f", item.getOurPrice())); // Show ourPrice
+            Label mrp = new Label(String.format("%.2f", item.getSalePrice())); // MRP
+            Label our = new Label(String.format("%.2f", item.getOurPrice())); // Our Price
             Label amount = new Label(String.format("%.2f", item.getAmount()));
 
-            String rowStyle = "-fx-font-size: 10px; -fx-text-fill: black;";
+            String rowStyle = "-fx-font-size: 9px; -fx-text-fill: black;";
             name.setStyle(rowStyle);
             qty.setStyle(rowStyle);
-            price.setStyle(rowStyle);
+            mrp.setStyle(rowStyle);
+            our.setStyle(rowStyle);
             amount.setStyle(rowStyle);
 
-            name.setPrefWidth(90);
+            name.setPrefWidth(60);
             name.setWrapText(true);
-            qty.setPrefWidth(55);
-            price.setPrefWidth(55);
-            amount.setPrefWidth(60);
+            qty.setPrefWidth(30);
+            mrp.setPrefWidth(45);
+            our.setPrefWidth(60);
+            amount.setPrefWidth(65);
             amount.setAlignment(Pos.CENTER_RIGHT);
 
-            row.getChildren().addAll(name, qty, price, amount);
+            row.getChildren().addAll(name, qty, mrp, our, amount);
             container.getChildren().add(row);
         }
 
@@ -199,6 +205,17 @@ public class ReceiptsUtil {
         footer2.setAlignment(Pos.CENTER);
 
         container.getChildren().addAll(footer, footer2);
+
+        // --- Powered by QALDRIN ---
+        Label poweredBy = new Label("powered by QALDRIN");
+        poweredBy.setStyle("-fx-font-size: 8px; -fx-text-fill: #7f8c8d; -fx-font-style: italic;");
+        Label website = new Label("www.qaldrin.com");
+        website.setStyle("-fx-font-size: 8px; -fx-text-fill: #7f8c8d;");
+
+        VBox qaldrinBox = new VBox(2, poweredBy, website);
+        qaldrinBox.setAlignment(Pos.CENTER);
+        qaldrinBox.setPadding(new Insets(10, 0, 10, 0));
+        container.getChildren().add(qaldrinBox);
 
         return container;
     }
@@ -297,12 +314,10 @@ public class ReceiptsUtil {
                 return "පාරිභෝගිකයා:";
             case "Walk-in":
                 return "සාමාන්‍ය";
-            case "Item":
-                return "විස්තරය";
-            case "Qty":
-                return "ප්‍රමාණය";
-            case "Price":
+            case "MRP":
                 return "මිල";
+            case "Our":
+                return "අපේ මිල";
             case "Total":
                 return "මුළු මුදල";
             case "SUBTOTAL":

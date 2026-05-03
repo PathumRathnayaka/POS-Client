@@ -57,7 +57,7 @@ public class DashboardContentController implements Initializable {
 
     private final ApiService apiService = new ApiService();
     private final ObservableList<SaleItem> saleItems = FXCollections.observableArrayList();
-    private static final double TAX_RATE = 0.10;
+    private static final double TAX_RATE = 0.0;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
